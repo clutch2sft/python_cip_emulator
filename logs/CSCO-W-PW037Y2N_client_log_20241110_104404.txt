@@ -1,0 +1,258 @@
+Log started at 2024-11-10 10:44:04
+========================================
+[2024-11-10 10:44:07] [INFO] CIP_IO1: UDP socket created with DSCP value 43 (0xAC).
+o 1.
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent: CIP CM Client Keepalive - 2024-11-10 10:44:07.219179
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 1, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_Safety: CIP Client started with sequence number reset to 1.
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Connected to TCP CIP CM Server.
+[2024-11-10 10:44:07] [INFO] CIP_Safety: UDP socket created with DSCP value 47 (0xBC).
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Client started successfully
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Sent: CIP CM Client Keepalive - 2024-11-10 10:44:07.228308
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Client started successfully
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 1, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 2, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 3, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 2, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 4, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 5, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 3, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 6, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 4, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 7, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:07] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 8, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 5, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 9, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Skipped UDP packet with sequence 10
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 11, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 6, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 12, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 13, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 7, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 14, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 15, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 8, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 16, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 17, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 9, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 18, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:08] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 19, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 10, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Skipped UDP packet with sequence 20
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 21, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 22, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 11, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 23, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 24, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 12, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 25, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 26, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 13, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 27, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 28, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 14, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 29, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Skipped UDP packet with sequence 30
+[2024-11-10 10:44:09] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 31, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 15, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 32, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 33, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 16, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 34, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 35, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 17, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 36, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 37, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 18, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 38, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 39, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 19, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Skipped UDP packet with sequence 40
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 41, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:10] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 42, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 20, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 43, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 44, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 21, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 45, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 46, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 22, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 47, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 48, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 23, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 49, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Skipped UDP packet with sequence 50
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 51, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:11] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 24, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:11] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 52, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 53, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 25, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 54, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 55, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 26, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 56, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 57, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 27, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 58, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 59, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 28, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Skipped UDP packet with sequence 60
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 61, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 62, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:12] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 29, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:12] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 63, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 64, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 30, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 65, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 66, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 31, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 67, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 68, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 32, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 69, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Skipped UDP packet with sequence 70
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 71, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 33, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 72, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 73, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:13] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 34, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:13] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 74, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 75, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 35, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 76, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 77, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 36, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 78, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 79, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 37, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Skipped UDP packet with sequence 80
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 81, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 82, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 38, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 83, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 84, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:14] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 39, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:14] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 85, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 86, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 40, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 87, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 88, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 41, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 89, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Skipped UDP packet with sequence 90
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 91, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 42, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 92, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:15] [INFO] CIP_IO1: Sent disconnect message to server.
+[2024-11-10 10:44:15] [INFO] CIP_IO1: TCP connection closed gracefully.
+[2024-11-10 10:44:15] [INFO] CIP_IO1: UDP connection closed gracefully.
+[2024-11-10 10:44:15] [INFO] CIP_IO1: CIP Client stopped.
+[2024-11-10 10:44:15] [INFO] CIP_Safety: Sent disconnect message to server.
+[2024-11-10 10:44:15] [INFO] CIP_Safety: TCP connection closed gracefully.
+[2024-11-10 10:44:15] [INFO] CIP_Safety: UDP connection closed gracefully.
+[2024-11-10 10:44:15] [INFO] CIP_Safety: CIP Client stopped.
+[2024-11-10 10:44:15] [INFO] CIP_IO1: UDP socket closed.
+[2024-11-10 10:44:15] [INFO] CIP_Safety: UDP socket closed.
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Connected to TCP CIP CM Server.
+number reset to 1.
+[2024-11-10 10:44:17] [INFO] CIP_IO1: UDP socket created with DSCP value 43 (0xAC).
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 1, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent: CIP CM Client Keepalive - 2024-11-10 10:44:17.229781
+[2024-11-10 10:44:17] [INFO] CIP_Safety: Connected to TCP CIP CM Server.
+[2024-11-10 10:44:17] [INFO] CIP_Safety: CIP Client started with sequence number reset to 1.
+[2024-11-10 10:44:17] [INFO] CIP_Safety: UDP socket created with DSCP value 47 (0xBC).
+[2024-11-10 10:44:17] [INFO] CIP_Safety: Sent: CIP CM Client Keepalive - 2024-11-10 10:44:17.231797
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Client started successfully
+[2024-11-10 10:44:17] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 1, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:17] [INFO] CIP_Safety: Client started successfully
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 2, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 3, DSCP 43, and size 150 bytes
+tes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 4, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:17] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 3, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 5, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 6, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:17] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 4, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 7, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:17] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 8, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 5, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 9, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Skipped UDP packet with sequence 10
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 11, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 6, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 12, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 13, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 7, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 14, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 15, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 8, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 16, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 17, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 9, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 18, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:18] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 19, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 10, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Skipped UDP packet with sequence 20
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 21, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 22, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 11, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 23, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 24, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 12, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 25, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 26, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 13, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 27, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 28, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 14, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 29, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Skipped UDP packet with sequence 30
+[2024-11-10 10:44:19] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 31, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 15, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 32, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 33, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 16, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 34, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 35, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 17, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 36, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 37, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 18, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 38, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 39, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 19, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Skipped UDP packet with sequence 40
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 41, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:20] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 42, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 20, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 43, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 44, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 21, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 45, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 46, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 22, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 47, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 48, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 23, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 49, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Skipped UDP packet with sequence 50
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 51, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 24, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 52, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:21] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 53, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:22] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 25, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:22] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 54, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:22] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 55, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:22] [INFO] CIP_Safety: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_Safety', sequence 26, DSCP 47, and size 84 bytes
+[2024-11-10 10:44:22] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 56, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:22] [INFO] CIP_IO1: Sent UDP packet to (127.0.0.1,2222) with tag 'CIP_IO1', sequence 57, DSCP 43, and size 150 bytes
+[2024-11-10 10:44:22] [INFO] CIP_IO1: Sent disconnect message to server.
+[2024-11-10 10:44:22] [INFO] CIP_IO1: TCP connection closed gracefully.
+[2024-11-10 10:44:22] [INFO] CIP_IO1: UDP connection closed gracefully.
+[2024-11-10 10:44:22] [INFO] CIP_IO1: CIP Client stopped.
+[2024-11-10 10:44:22] [INFO] CIP_Safety: Sent disconnect message to server.
+[2024-11-10 10:44:22] [INFO] CIP_Safety: TCP connection closed gracefully.
+[2024-11-10 10:44:22] [INFO] CIP_Safety: UDP connection closed gracefully.
+[2024-11-10 10:44:22] [INFO] CIP_Safety: CIP Client stopped.
+[2024-11-10 10:44:22] [INFO] CIP_Safety: UDP socket closed.
+[2024-11-10 10:44:22] [INFO] CIP_IO1: UDP socket closed.

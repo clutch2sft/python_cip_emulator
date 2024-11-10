@@ -1,0 +1,46 @@
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ignore logs directory
+log/
+
+# Ignore virtual environments
+venv/
+.env/
+env/
+*.venv
+*.env
+
+# Ignore VSCode settings and extensions
+.vscode/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore compiled Python files
+*.pyc
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Ignore test coverage and profiling files
+htmlcov/
+*.cover
+*.coverage
+*.coveragerc
+.cache
+nosetests.xml
+coverage.xml
+*.prof
+
+# Ignore distributions
+dist/
+build/
+*.egg-info/
+
+# Ignore pipenv and poetry files
+Pipfile.lock
+poetry.lock

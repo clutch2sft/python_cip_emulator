@@ -1,0 +1,31 @@
+{
+    "app": {
+        "log_directory": "./logs" 
+    },
+    "consumer": {  
+        "tcp_port": 1502,
+        "udp_port": 2222,
+        "buffer_size": 1024,
+        "tcp_keepalive_multiplier": 10
+    },
+    "producers": {  
+        "CIP_IO1": {
+            "ip": "127.0.0.1",
+            "packet_interval_ms": 100,
+            "enable_packet_skip": true,
+            "qos": 43,
+            "packet_size": 150,
+            "udp_dstport": 2222,
+            "udp_srcport": 2222
+        },
+        "CIP_Safety": { 
+            "ip": "127.0.0.1",
+            "packet_interval_ms": 200,
+            "enable_packet_skip": false,
+            "qos": 47,
+            "packet_size": 84,
+            "udp_dstport": 2222,
+            "udp_srcport": 2222
+        }
+    }
+}
