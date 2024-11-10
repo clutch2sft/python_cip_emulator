@@ -1,3 +1,0 @@
-Log started at 2024-11-10 10:44:04
-========================================
-[2024-11-10 10:44:04] [INFO] Starting CIP Emulator in GUI mode.
