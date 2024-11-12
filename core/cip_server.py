@@ -125,16 +125,21 @@ class CIPServer:
 
             while self.running:
                 try:
+                    # After receiving the data and capturing timestamps
                     data, addr = self.udp_socket.recvfrom(self.consumer_config.get("buffer_size", 2048))
-                    #print(f"[DEBUG] Packet received from {addr}: {data.decode()}")
-                    
+                    # Debug log for received data
+                    print(f"[DEBUG] Packet received from {addr}: {data.decode()}")
+
                     # Capture receive timestamp
                     rcvd_timestamp = datetime.now()
                     tag, received_seq_num, sent_timestamp = data.decode().split(',')
                     received_seq_num = int(received_seq_num)
-                    
+
                     # Convert sent timestamp to a datetime object
                     packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+
+                    # Debug log for timestamps
+                    print(f"[DEBUG] Packet timestamp: {packet_timestamp}, Receive timestamp: {rcvd_timestamp}")
 
                     # Calculate flight time in milliseconds
                     flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
