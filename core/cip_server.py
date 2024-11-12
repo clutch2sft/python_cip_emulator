@@ -73,25 +73,34 @@ class CIPServer:
 
     def _check_flight_time_outlier(self, flight_time_ms):
         """Check if a flight time is an outlier based on mean and standard deviation."""
-        # Add the new flight time to the list
-        self.flight_times.append(flight_time_ms)
         
-        # Trim the list to the maximum number of samples
-        if len(self.flight_times) > self.max_flight_time_samples:
-            self.flight_times.pop(0)
-
-        # Calculate mean and standard deviation
+        # Check if we have enough samples for outlier calculation
         if len(self.flight_times) >= 2:  # Require at least two samples to calculate std deviation
             mean_flight_time = statistics.mean(self.flight_times)
             stdev_flight_time = statistics.stdev(self.flight_times)
 
-            # Consider the current flight time an outlier if it exceeds mean + 2 * stdev
+            # Set the threshold as mean + 2 * standard deviation
             threshold = mean_flight_time + 2 * stdev_flight_time
             is_outlier = flight_time_ms > threshold
+
+            # If it's not an outlier, add to the list for future calculations
+            if not is_outlier:
+                self.flight_times.append(flight_time_ms)
+
+                # Trim the list to the maximum number of samples
+                if len(self.flight_times) > self.max_flight_time_samples:
+                    self.flight_times.pop(0)
+
             return is_outlier, mean_flight_time, stdev_flight_time
-        else:
-            # Not enough data to calculate outliers yet
-            return False, None, None
+        
+        # If we don't have enough data points, add the flight time directly and skip outlier check
+        self.flight_times.append(flight_time_ms)
+        if len(self.flight_times) > self.max_flight_time_samples:
+            self.flight_times.pop(0)
+
+        # Not enough data to determine outliers, so return False
+        return False, None, None
+
 
     def handle_udp_io(self):
         """Handle the UDP I/O server."""
