@@ -97,8 +97,9 @@ class CIPServer:
                     # Convert sent timestamp to a datetime object
                     packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
                     
-                    # Calculate flight time
-                    flight_time = rcvd_timestamp - packet_timestamp
+                    # Calculate flight time in milliseconds
+                    flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
+
 
                     # Track last sequence number per client tag
                     last_seq_num = self.last_sequence_numbers.get(tag, 0)
@@ -116,7 +117,7 @@ class CIPServer:
                     received_log = (
                         f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} "
                         f"SENT_TIMESTAMP={sent_timestamp} RCVD_TIMESTAMP={rcvd_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')} "
-                        f"FLIGHT_TIME={flight_time.total_seconds():.6f} seconds"
+                        f"FLIGHT_TIME={flight_time_ms:.3f} ms."
                     )
                     self.logger(received_log, level="INFO")
 

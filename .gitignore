@@ -44,3 +44,4 @@ build/
 # Ignore pipenv and poetry files
 Pipfile.lock
 poetry.lock
+config.json
