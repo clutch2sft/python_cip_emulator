@@ -4,7 +4,7 @@ import zmq
 # Initialize ZeroMQ
 context = zmq.Context()
 socket = context.socket(zmq.PAIR)
-socket.connect("tcp://172.16.5.163:5555")  # Connect to Application 1's IP address
+socket.bind("tcp://172.16.5.163:5555")  # Bind to its own IP address
 
 # Set up precise timing
 start_time_ns = time.perf_counter_ns()
@@ -15,10 +15,8 @@ def get_precise_timestamp():
     elapsed_time_ns = current_time_ns - start_time_ns
     return system_start_time_ns + elapsed_time_ns
 
-# Periodically receive timestamps and calculate discrepancies
+# Periodically send timestamps to Application 2
 while True:
-    received_timestamp_ns = socket.recv_pyobj()
-    local_timestamp_ns = get_precise_timestamp()
-    discrepancy_ns = abs(local_timestamp_ns - received_timestamp_ns)
-    print(f"Timing Discrepancy: {discrepancy_ns} ns")
-    time.sleep(0.1)
+    timestamp_ns = get_precise_timestamp()
+    socket.send_pyobj(timestamp_ns)
+    time.sleep(0.1)  # Send every 100ms
