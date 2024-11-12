@@ -71,13 +71,23 @@ class CIPServer:
                 self.tcp_socket.close()
                 self.logger("TCP server shut down.", level="INFO")
 
+
+
     def _check_flight_time_outlier(self, flight_time_ms):
         """Check if a flight time is an outlier based on mean and standard deviation."""
+        
+        # Ensure flight time is non-negative
+        if flight_time_ms < 0:
+            print(f"[DEBUG] Negative flight time detected: {flight_time_ms}ms")
+            return False, None, None
         
         # Check if we have enough samples for outlier calculation
         if len(self.flight_times) >= 2:  # Require at least two samples to calculate std deviation
             mean_flight_time = statistics.mean(self.flight_times)
             stdev_flight_time = statistics.stdev(self.flight_times)
+
+            # Debug log for calculated mean and standard deviation
+            print(f"[DEBUG] Calculated mean flight time: {mean_flight_time}ms, stdev: {stdev_flight_time}ms")
 
             # Set the threshold as mean + 2 * standard deviation
             threshold = mean_flight_time + 2 * stdev_flight_time
@@ -93,13 +103,14 @@ class CIPServer:
 
             return is_outlier, mean_flight_time, stdev_flight_time
         
-        # If we don't have enough data points, add the flight time directly and skip outlier check
+        # Not enough data points; add flight time and return defaults
         self.flight_times.append(flight_time_ms)
         if len(self.flight_times) > self.max_flight_time_samples:
             self.flight_times.pop(0)
 
-        # Not enough data to determine outliers, so return False
+        # Return None for mean and stdev until sufficient data points are accumulated
         return False, None, None
+
 
 
     def handle_udp_io(self):

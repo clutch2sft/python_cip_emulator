@@ -14,35 +14,17 @@ def main():
     consumer_config = config.get("consumer", {})
     producers_config = config.get("producers", {})
     hostname = socket.gethostname()
+
     # Set up argument parser with detailed help messages
     parser = argparse.ArgumentParser(
         description="CIP Emulator - Choose to run in GUI or headless mode with options for running server, client, or both."
     )
-    parser.add_argument(
-        "--no-gui", 
-        action="store_true", 
-        help="Run the emulator in headless mode without a GUI. Defaults to starting both server and client unless specified otherwise."
-    )
-    parser.add_argument(
-        "--server-only", 
-        action="store_true", 
-        help="Run only the server in headless mode. Requires --no-gui if running without a GUI."
-    )
-    parser.add_argument(
-        "--client-only", 
-        action="store_true", 
-        help="Run only the clients in headless mode. Requires --no-gui if running without a GUI."
-    )
-    parser.add_argument(
-        "--both", 
-        action="store_true", 
-        help="Run both server and clients in headless mode. Requires --no-gui if running without a GUI."
-    )
-    parser.add_argument(
-        "--show-config", 
-        action="store_true", 
-        help="Display the current configuration and exit without starting the emulator."
-    )
+    parser.add_argument("--no-gui", action="store_true", help="Run the emulator in headless mode without a GUI. Defaults to starting both server and client unless specified otherwise.")
+    parser.add_argument("--server-only", action="store_true", help="Run only the server in headless mode. Requires --no-gui if running without a GUI.")
+    parser.add_argument("--client-only", action="store_true", help="Run only the clients in headless mode. Requires --no-gui if running without a GUI.")
+    parser.add_argument("--both", action="store_true", help="Run both server and clients in headless mode. Requires --no-gui if running without a GUI.")
+    parser.add_argument("--show-config", action="store_true", help="Display the current configuration and exit without starting the emulator.")
+    parser.add_argument("--quiet", action="store_true", help="Suppress packet-sending logs from clients in headless mode.")
     
     args = parser.parse_args()
 
@@ -81,14 +63,15 @@ def main():
                 emulator_logger.info(f"Initializing client logger for {client_logger_name}")
                 client_loggers[tag] = create_logger(client_logger_name, use_ansi_colors=True)
 
-        # Initialize CIPEmulator with the required loggers
+        # Initialize CIPEmulator with the required loggers and quiet option
         emulator = CIPEmulator(
             app_config,
             consumer_config,
             producers_config,
             logger_server=server_logger,
             logger_client=client_loggers,
-            gui_mode=False
+            gui_mode=False,
+            quiet=args.quiet  # Pass the quiet flag to CIPEmulator
         )
 
         # Start components based on arguments, with server-client coordination

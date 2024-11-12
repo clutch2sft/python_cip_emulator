@@ -4,7 +4,7 @@ import time
 from datetime import datetime, timedelta
 
 class CIPClient:
-    def __init__(self, logger, producer_config, tag):
+    def __init__(self, logger, producer_config, tag, quiet = False):
         self.logger = logger
         self.config = producer_config
         self.tag = tag
@@ -19,6 +19,7 @@ class CIPClient:
         self.sequence_number = 1
         self.running = False
         self.tcp_connected = threading.Event()
+        self.quiet = quiet
 
         # Retrieve QoS (DSCP value) from config, defaulting to 0 if not provided
         self.qos = self.config.get("qos", 0)
@@ -149,7 +150,8 @@ class CIPClient:
                 # Send the packet with padded or truncated data
                 #self.udp_socket.sendto(message_bytes, (self.server_ip, self.udp_port))
                 self.udp_socket.sendto(message.encode(), (self.server_ip, self.udp_dstport))
-                self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes", level="INFO")
+                if not self.quiet:
+                    self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes", level="INFO")
 
                 self.sequence_number += 1
 
