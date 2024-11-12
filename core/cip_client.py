@@ -1,7 +1,7 @@
 import socket
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class CIPClient:
     def __init__(self, logger, producer_config, tag):
@@ -123,9 +123,19 @@ class CIPClient:
                     self.sequence_number += 1
                     continue
 
+                
                 # Construct message and apply padding if needed
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                message = f"{self.tag},{self.sequence_number},{timestamp}"
+                timestamp = datetime.now()
+                
+                # Adjust timestamp for every 11th packet to create an outlier
+                if self.enable_packet_skip and self.sequence_number % 11 == 0:
+                    timestamp -= timedelta(seconds=2)  # Subtract 2 seconds (or any duration to create an outlier)
+                    self.logger(f"Adjusted timestamp for sequence {self.sequence_number} to create an outlier", level="INFO")
+                
+                # Format the timestamp as a string after adjustment, if any
+                timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+                # Construct message and apply padding if needed
+                message = f"{self.tag},{self.sequence_number},{timestamp_str}"
                 message_bytes = message.encode()
 
                 # Pad or truncate the message to fit the desired packet size
