@@ -130,7 +130,9 @@ class CIPClient:
                 
                 # Adjust timestamp for every 11th packet to create an outlier
                 if self.enable_packet_skip and self.sequence_number % 11 == 0:
-                    timestamp -= timedelta(seconds=2)  # Subtract 2 seconds (or any duration to create an outlier)
+                    print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {timestamp}")
+                    timestamp -= timedelta(seconds=2)  # Subtract 2 seconds to create an outlier
+                    print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {timestamp}")
                     self.logger(f"Adjusted timestamp for sequence {self.sequence_number} to create an outlier", level="INFO")
                 
                 # Format the timestamp as a string after adjustment, if any
