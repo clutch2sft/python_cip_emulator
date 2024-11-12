@@ -1,40 +1,43 @@
-# server.py
+# server_tcp.py
 import socket
 import signal
 import sys
 
-# Global variable for the server socket so it can be closed gracefully
-server_socket = None
-
 def signal_handler(sig, frame):
     print("\nServer is shutting down...")
-    if server_socket:
-        server_socket.close()  # Close the server socket
     sys.exit(0)  # Exit the program
 
-def start_server(host='127.0.0.1', port=65432):
-    global server_socket
+def start_server(host='127.0.0.1', port=65432, protocol='udp'):
     # Set up the signal handler for graceful shutdown
     signal.signal(signal.SIGINT, signal_handler)
-    
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind((host, port))
-    print(f"Server started on {host}:{port}, waiting for messages...")
 
-    try:
-        while True:
-            data, address = server_socket.recvfrom(1024)
-            print(f"Received message from {address}: {data.decode()}")
-            # Send the same data back to the client
-            server_socket.sendto(data, address)
+    if protocol.lower() == 'udp':
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
+            server_socket.bind((host, port))
+            print(f"UDP server started on {host}:{port}, waiting for messages...")
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+            while True:
+                data, address = server_socket.recvfrom(1024)
+                print(f"Received message from {address}: {data.decode()}")
+                server_socket.sendto(data, address)
 
-    finally:
-        # Clean up the socket in case of other exceptions
-        if server_socket:
-            server_socket.close()
+    elif protocol.lower() == 'tcp':
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.bind((host, port))
+            server_socket.listen()
+            print(f"TCP server started on {host}:{port}, waiting for connections...")
+
+            while True:
+                conn, address = server_socket.accept()
+                with conn:
+                    print(f"Connected by {address}")
+                    while True:
+                        data = conn.recv(1024)
+                        if not data:
+                            break
+                        print(f"Received message: {data.decode()}")
+                        conn.sendall(data)
 
 if __name__ == "__main__":
-    start_server()
+    # Start the server with `protocol='tcp'` for TCP or `protocol='udp'` for UDP
+    start_server(protocol='tcp')
