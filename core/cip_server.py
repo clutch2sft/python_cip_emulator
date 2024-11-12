@@ -73,105 +73,113 @@ class CIPServer:
 
 
 
-import statistics
-
-def _check_flight_time_outlier(self, flight_time_ms):
-    """Check if a flight time is an outlier based on mean and standard deviation."""
-    
-    # Ensure flight time is non-negative
-    if flight_time_ms < 0:
-        print(f"[DEBUG] Negative flight time detected: {flight_time_ms}ms")
-        return False, None, None
-    
-    # Only compute outliers if we have enough samples
-    if len(self.flight_times) >= 2:
-        mean_flight_time = statistics.mean(self.flight_times)
-        stdev_flight_time = statistics.stdev(self.flight_times)
-
-        # Debug log for calculated mean and standard deviation
-        print(f"[DEBUG] Mean flight time: {mean_flight_time} ms, StDev: {stdev_flight_time} ms")
-
-        # Set the outlier threshold (mean + 2*stdev)
-        threshold = mean_flight_time + 2 * stdev_flight_time
-        is_outlier = flight_time_ms > threshold
-
-        # Add flight time only if it's not an outlier
-        if not is_outlier:
-            self.flight_times.append(flight_time_ms)
-            # Maintain max sample count
-            if len(self.flight_times) > self.max_flight_time_samples:
-                self.flight_times.pop(0)
+    def _check_flight_time_outlier(self, flight_time_ms):
+        """Check if a flight time is an outlier based on mean and standard deviation."""
         
-        return is_outlier, mean_flight_time, stdev_flight_time
+        # Ensure flight time is non-negative
+        if flight_time_ms < 0:
+            print(f"[DEBUG] Negative flight time detected: {flight_time_ms}ms")
+            return False, None, None
+        
+        # Check if we have enough samples for outlier calculation
+        if len(self.flight_times) >= 2:  # Require at least two samples to calculate std deviation
+            mean_flight_time = statistics.mean(self.flight_times)
+            stdev_flight_time = statistics.stdev(self.flight_times)
 
-    # Not enough data points; add flight time and skip outlier detection
-    self.flight_times.append(flight_time_ms)
-    if len(self.flight_times) > self.max_flight_time_samples:
-        self.flight_times.pop(0)
+            # Debug log for calculated mean and standard deviation
+            print(f"[DEBUG] Calculated mean flight time: {mean_flight_time}ms, stdev: {stdev_flight_time}ms")
 
-    return False, None, None  # Insufficient data points for outlier detection
+            # Set the threshold as mean + 2 * standard deviation
+            threshold = mean_flight_time + 2 * stdev_flight_time
+            is_outlier = flight_time_ms > threshold
+
+            # If it's not an outlier, add to the list for future calculations
+            if not is_outlier:
+                self.flight_times.append(flight_time_ms)
+
+                # Trim the list to the maximum number of samples
+                if len(self.flight_times) > self.max_flight_time_samples:
+                    self.flight_times.pop(0)
+
+            return is_outlier, mean_flight_time, stdev_flight_time
+        
+        # Not enough data points; add flight time and return defaults
+        self.flight_times.append(flight_time_ms)
+        if len(self.flight_times) > self.max_flight_time_samples:
+            self.flight_times.pop(0)
+
+        # Return None for mean and stdev until sufficient data points are accumulated
+        return False, None, None
 
 
-def handle_udp_io(self):
-    """Handle the UDP I/O server."""
-    try:
-        self.logger("Initializing UDP socket...", level="INFO")
-        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.udp_socket.bind(("", self.consumer_config.get("udp_port", 2222)))
-        self.udp_socket.settimeout(0.5)
-        self.logger(f"UDP server is listening on port {self.consumer_config.get('udp_port', 2222)}.", level="INFO")
 
-        while self.running:
-            try:
-                # Receive data and capture timestamps
-                data, addr = self.udp_socket.recvfrom(self.consumer_config.get("buffer_size", 2048))
-                rcvd_timestamp = datetime.now()
-                tag, received_seq_num, sent_timestamp = data.decode().split(',')
-                received_seq_num = int(received_seq_num)
+    def handle_udp_io(self):
+        """Handle the UDP I/O server."""
+        try:
+            self.logger("Initializing UDP socket...", level="INFO")
+            self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.udp_socket.bind(("", self.consumer_config.get("udp_port", 2222)))
+            self.udp_socket.settimeout(0.5)
+            self.logger(f"UDP server is listening on port {self.consumer_config.get('udp_port', 2222)}.", level="INFO")
 
-                # Convert sent timestamp to datetime
-                packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+            while self.running:
+                try:
+                    # After receiving the data and capturing timestamps
+                    data, addr = self.udp_socket.recvfrom(self.consumer_config.get("buffer_size", 2048))
+                    # Debug log for received data
+                    print(f"[DEBUG] Packet received from {addr}: {data.decode()}")
 
-                # Calculate flight time in milliseconds
-                flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
-                print(f"[DEBUG] Flight time calculated: {flight_time_ms} ms")
+                    # Capture receive timestamp
+                    rcvd_timestamp = datetime.now()
+                    tag, received_seq_num, sent_timestamp = data.decode().split(',')
+                    received_seq_num = int(received_seq_num)
 
-                # Verify positive flight time and detect outliers
-                is_outlier, mean, stdev = self._check_flight_time_outlier(flight_time_ms)
+                    # Convert sent timestamp to a datetime object
+                    packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
 
-                # Track missed packets
-                last_seq_num = self.last_sequence_numbers.get(tag, 0)
-                if received_seq_num != last_seq_num + 1 and last_seq_num != 0:
-                    missed_count = received_seq_num - last_seq_num - 1
-                    missed_log = (
-                        f"Missed MISSEDCNT={missed_count} packet(s) TAG='{tag}' SRC_IP_PORT={addr} "
-                        f"MISS_TIMESTAMP={packet_timestamp} LSEQNO={last_seq_num} RSEQNO={received_seq_num}"
+                    # Debug log for timestamps
+                    print(f"[DEBUG] Packet timestamp: {packet_timestamp}, Receive timestamp: {rcvd_timestamp}")
+
+                    # Calculate flight time in milliseconds
+                    flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
+
+                    # Check if flight time is an outlier
+                    is_outlier, mean, stdev = self._check_flight_time_outlier(flight_time_ms)
+
+                    # Track last sequence number per client tag
+                    last_seq_num = self.last_sequence_numbers.get(tag, 0)
+                    if received_seq_num != last_seq_num + 1 and last_seq_num != 0:
+                        missed_count = received_seq_num - last_seq_num - 1
+                        #print(f"[DEBUG] Missed {missed_count} packets from tag '{tag}' between {last_seq_num} and {received_seq_num}")
+                        missed_log = (
+                            f"Missed MISSEDCNT={missed_count} packet(s)  TAG='{tag}' SRC_IP_PORT={addr} MISS_TIMESTAMP={packet_timestamp} "
+                            f"between sequence LSEQNO={last_seq_num} and RSEQNO={received_seq_num} "
+                        )
+                        self.logger(missed_log, level="ERROR")
+                    # Log the received packet, marking outliers if necessary
+                    received_log = (
+                        f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} "
+                        f"SENT_TIMESTAMP={sent_timestamp} RCVD_TIMESTAMP={rcvd_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')} "
+                        f"FLIGHT_TIME={flight_time_ms:.3f} ms"
                     )
-                    self.logger(missed_log, level="ERROR")
 
-                # Log the received packet with outlier information if applicable
-                received_log = (
-                    f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} "
-                    f"SENT_TIMESTAMP={sent_timestamp} RCVD_TIMESTAMP={rcvd_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')} "
-                    f"FLIGHT_TIME={flight_time_ms:.3f} ms"
-                )
+                    if is_outlier:
+                        received_log += f" [OUTLIER - Mean: {mean:.3f} ms, StDev: {stdev:.3f} ms]"
+                        # Pass the `outlier_tag` for color coding if configured in GUI/CLI logger
+                        self.logger(received_log, level="ERROR")
+                    else:
+                        self.logger(received_log, level="INFO")
 
-                if is_outlier:
-                    received_log += f" [OUTLIER - Mean: {mean:.3f} ms, StDev: {stdev:.3f} ms]"
-                    self.logger(received_log, level="ERROR")
-                else:
-                    self.logger(received_log, level="INFO")
+                    # Update last sequence number for this client tag
+                    self.last_sequence_numbers[tag] = received_seq_num
 
-                # Update last sequence number for this client tag
-                self.last_sequence_numbers[tag] = received_seq_num
-
-            except socket.timeout:
-                continue
-            except OSError as e:
-                self.logger(f"UDP server error: {e}", level="ERROR")
-                break
-    finally:
-        if self.udp_socket:
-            self.udp_socket.close()
-            self.logger("UDP server shut down.", level="INFO")
+                except socket.timeout:
+                    continue
+                except OSError as e:
+                    self.logger(f"UDP server error: {e}", level="ERROR")
+                    break
+        finally:
+            if self.udp_socket:
+                self.udp_socket.close()
+                self.logger("UDP server shut down.", level="INFO")
