@@ -88,10 +88,17 @@ class CIPServer:
                     #print("[DEBUG] Waiting for UDP packet...")
                     data, addr = self.udp_socket.recvfrom(self.consumer_config.get("buffer_size", 2048))
                     #print(f"[DEBUG] Packet received from {addr}: {data.decode()}")
-
-                    tag, received_seq_num, timestamp = data.decode().split(',')
+                    
+                    # Capture receive timestamp
+                    rcvd_timestamp = datetime.now()
+                    tag, received_seq_num, sent_timestamp = data.decode().split(',')
                     received_seq_num = int(received_seq_num)
-                    packet_timestamp = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S.%f")
+                    
+                    # Convert sent timestamp to a datetime object
+                    packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+                    
+                    # Calculate flight time
+                    flight_time = rcvd_timestamp - packet_timestamp
 
                     # Track last sequence number per client tag
                     last_seq_num = self.last_sequence_numbers.get(tag, 0)
@@ -105,19 +112,20 @@ class CIPServer:
                         )
                         self.logger(missed_log, level="ERROR")
 
-                    # Log the received packet
-                    received_log = f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} RCVD_TIMESTAMP={timestamp}"
-                    #print(f"[DEBUG] {received_log}")
+                    # Log the received packet, including the calculated flight time
+                    received_log = (
+                        f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} "
+                        f"SENT_TIMESTAMP={sent_timestamp} RCVD_TIMESTAMP={rcvd_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')} "
+                        f"FLIGHT_TIME={flight_time.total_seconds():.6f} seconds"
+                    )
                     self.logger(received_log, level="INFO")
 
                     # Update last sequence number for this client tag
                     self.last_sequence_numbers[tag] = received_seq_num
 
                 except socket.timeout:
-                    #print("[DEBUG] Socket timed out waiting for UDP packet")
                     continue
                 except OSError as e:
-                    #print(f"[DEBUG] UDP server error: {e}")
                     self.logger(f"UDP server error: {e}", level="ERROR")
                     break
         finally:
