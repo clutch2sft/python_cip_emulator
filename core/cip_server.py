@@ -81,36 +81,33 @@ class CIPServer:
             print(f"[DEBUG] Negative flight time detected: {flight_time_ms}ms")
             return False, None, None
         
-        # Check if we have enough samples for outlier calculation
-        if len(self.flight_times) >= 2:  # Require at least two samples to calculate std deviation
+        # Only compute outliers if we have enough samples
+        if len(self.flight_times) >= 2:
             mean_flight_time = statistics.mean(self.flight_times)
             stdev_flight_time = statistics.stdev(self.flight_times)
 
             # Debug log for calculated mean and standard deviation
-            print(f"[DEBUG] Calculated mean flight time: {mean_flight_time}ms, stdev: {stdev_flight_time}ms")
+            print(f"[DEBUG] Mean flight time: {mean_flight_time} ms, StDev: {stdev_flight_time} ms")
 
-            # Set the threshold as mean + 2 * standard deviation
+            # Set the outlier threshold (mean + 2*stdev)
             threshold = mean_flight_time + 2 * stdev_flight_time
             is_outlier = flight_time_ms > threshold
 
-            # If it's not an outlier, add to the list for future calculations
+            # Add flight time only if it's not an outlier
             if not is_outlier:
                 self.flight_times.append(flight_time_ms)
-
-                # Trim the list to the maximum number of samples
+                # Maintain max sample count
                 if len(self.flight_times) > self.max_flight_time_samples:
                     self.flight_times.pop(0)
-
+            
             return is_outlier, mean_flight_time, stdev_flight_time
-        
-        # Not enough data points; add flight time and return defaults
+
+        # Not enough data points; add flight time and skip outlier detection
         self.flight_times.append(flight_time_ms)
         if len(self.flight_times) > self.max_flight_time_samples:
             self.flight_times.pop(0)
 
-        # Return None for mean and stdev until sufficient data points are accumulated
-        return False, None, None
-
+        return False, None, None  # Insufficient data points for outlier detection
 
 
     def handle_udp_io(self):
@@ -125,39 +122,33 @@ class CIPServer:
 
             while self.running:
                 try:
-                    # After receiving the data and capturing timestamps
+                    # Receive data and capture timestamps
                     data, addr = self.udp_socket.recvfrom(self.consumer_config.get("buffer_size", 2048))
-                    # Debug log for received data
-                    print(f"[DEBUG] Packet received from {addr}: {data.decode()}")
-
-                    # Capture receive timestamp
                     rcvd_timestamp = datetime.now()
                     tag, received_seq_num, sent_timestamp = data.decode().split(',')
                     received_seq_num = int(received_seq_num)
 
-                    # Convert sent timestamp to a datetime object
+                    # Convert sent timestamp to datetime
                     packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
-
-                    # Debug log for timestamps
-                    print(f"[DEBUG] Packet timestamp: {packet_timestamp}, Receive timestamp: {rcvd_timestamp}")
 
                     # Calculate flight time in milliseconds
                     flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
+                    print(f"[DEBUG] Flight time calculated: {flight_time_ms} ms")
 
-                    # Check if flight time is an outlier
+                    # Verify positive flight time and detect outliers
                     is_outlier, mean, stdev = self._check_flight_time_outlier(flight_time_ms)
 
-                    # Track last sequence number per client tag
+                    # Track missed packets
                     last_seq_num = self.last_sequence_numbers.get(tag, 0)
                     if received_seq_num != last_seq_num + 1 and last_seq_num != 0:
                         missed_count = received_seq_num - last_seq_num - 1
-                        #print(f"[DEBUG] Missed {missed_count} packets from tag '{tag}' between {last_seq_num} and {received_seq_num}")
                         missed_log = (
-                            f"Missed MISSEDCNT={missed_count} packet(s)  TAG='{tag}' SRC_IP_PORT={addr} MISS_TIMESTAMP={packet_timestamp} "
-                            f"between sequence LSEQNO={last_seq_num} and RSEQNO={received_seq_num} "
+                            f"Missed MISSEDCNT={missed_count} packet(s) TAG='{tag}' SRC_IP_PORT={addr} "
+                            f"MISS_TIMESTAMP={packet_timestamp} LSEQNO={last_seq_num} RSEQNO={received_seq_num}"
                         )
                         self.logger(missed_log, level="ERROR")
-                    # Log the received packet, marking outliers if necessary
+
+                    # Log the received packet with outlier information if applicable
                     received_log = (
                         f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} "
                         f"SENT_TIMESTAMP={sent_timestamp} RCVD_TIMESTAMP={rcvd_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')} "
@@ -166,7 +157,6 @@ class CIPServer:
 
                     if is_outlier:
                         received_log += f" [OUTLIER - Mean: {mean:.3f} ms, StDev: {stdev:.3f} ms]"
-                        # Pass the `outlier_tag` for color coding if configured in GUI/CLI logger
                         self.logger(received_log, level="ERROR")
                     else:
                         self.logger(received_log, level="INFO")
