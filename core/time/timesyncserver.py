@@ -1,6 +1,27 @@
 import time
-import zmq
+import grpc
+from concurrent import futures
 import threading
+import timesync_pb2
+import timesync_pb2_grpc
+
+
+class TimeSyncService(timesync_pb2_grpc.TimeSyncServiceServicer):
+    def __init__(self, logger_app=None, debug=False):
+        self.logger = logger_app
+        self.debug = debug
+
+    def RequestTimestamp(self, request, context):
+        """Handles client requests for server time."""
+        timestamp_ns = time.time_ns()
+        if self.debug:
+            self.logger.info(f"TimeSyncService: Sending timestamp: {timestamp_ns}")
+        return timesync_pb2.TimeResponse(timestamp_ns=timestamp_ns)
+
+    def CheckHealth(self, request, context):
+        """Simple health check endpoint."""
+        return timesync_pb2.HealthCheckResponse(healthy=True)
+
 
 class TimeSyncServer:
     _instance = None  # Singleton instance
@@ -11,42 +32,47 @@ class TimeSyncServer:
         return cls._instance
 
     def __init__(self, ip_address='0.0.0.0', port=5555, logger_app=None, debug=False):
-        if not hasattr(self, 'initialized'):
+        if not hasattr(self, 'initialized'):  # Initialize only once (singleton pattern)
             self.ip_address = ip_address
             self.port = port
             self.logger = logger_app
             self.debug = debug
-            self.context = zmq.Context()
-            self.socket = self.context.socket(zmq.REP)  # Change to REP for request-response pattern
-            self.socket.bind(f"tcp://{self.ip_address}:{self.port}")
-            self.class_name = self.__class__.__name__
+            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+            self.service = TimeSyncService(logger_app=self.logger, debug=self.debug)
+            timesync_pb2_grpc.add_TimeSyncServiceServicer_to_server(self.service, self.server)
+            self.server.add_insecure_port(f'{self.ip_address}:{self.port}')
             self.running = False
-            self.initialized = True  # Flag to ensure __init__ only runs once
+            self.initialized = True
 
     def start(self):
-        """Start the server to respond to timestamp requests."""
-        self.logger.info(f"{self.class_name}: Start called on timesync server address {self.ip_address}:{self.port}")
-        self.running = True
-        threading.Thread(target=self._run, daemon=True).start()
+        """Starts the gRPC server to listen for incoming timestamp requests."""
+        if not self.running:
+            self.logger.info(f"TimeSyncServer: Starting on {self.ip_address}:{self.port}")
+            self.running = True
+            self.server.start()
+            threading.Thread(target=self._monitor_server, daemon=True).start()
+        else:
+            self.logger.warning("TimeSyncServer: Server is already running.")
 
     def stop(self):
-        """Stop the server."""
-        self.logger.info(f"{self.class_name}: Stop called on timesync server address {self.ip_address}:{self.port}")
-        self.running = False
+        """Stops the gRPC server."""
+        if self.running:
+            self.logger.info(f"TimeSyncServer: Stopping on {self.ip_address}:{self.port}")
+            self.running = False
+            self.server.stop(grace=5)
+        else:
+            self.logger.warning("TimeSyncServer: Server is already stopped.")
 
-    def _run(self):
+    def _monitor_server(self):
+        """Monitor server activity and log if in debug mode."""
         while self.running:
-            # Wait for a request from the client
-            message = self.socket.recv()  # Blocking until client sends a request
-            if message == b"REQUEST_TIMESTAMP":
-                # Send the current timestamp to the client
-                timestamp_ns = time.time_ns()
-                self.socket.send_pyobj(timestamp_ns)  # Send timestamp as response
-                if self.debug:
-                    self.logger.info(f"{self.class_name}: Server sent timestamp: {timestamp_ns}")
+            if self.debug:
+                self.logger.info("TimeSyncServer: Running and ready to accept requests.")
+            time.sleep(5)
 
     def close(self):
-        """Close the ZeroMQ socket and context."""
-        self.socket.close()
-        self.context.term()
-        TimeSyncServer._instance = None  # Reset singleton instance
+        """Closes the server and resets the singleton instance."""
+        self.stop()
+        self.logger.info("TimeSyncServer: Server has been closed.")
+        TimeSyncServer._instance = None  # Reset the singleton instance
+

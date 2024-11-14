@@ -7,7 +7,7 @@ from utils.logger import create_logger
 import socket, time
 import atexit
 import time
-
+import cProfile
 
 CONFIG_PATH = "config.json"  # Path to the configuration file
 
@@ -134,4 +134,5 @@ def display_config(app_config, consumer_config, producer_config):
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    cProfile.run('main()', 'profile_results.prof')

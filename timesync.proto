@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package timesync;
+
+service TimeSyncService {
+  rpc RequestTimestamp (TimeRequest) returns (TimeResponse);
+  rpc CheckHealth (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message TimeRequest {}
+
+message TimeResponse {
+  int64 timestamp_ns = 1;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+}
