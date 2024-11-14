@@ -2,8 +2,9 @@ import socket
 import threading
 from datetime import datetime
 import statistics
+
 class CIPServer:
-    def __init__(self, logger, consumer_config):
+    def __init__(self, logger, consumer_config, network_latency_ns=30000000):
         self.logger = logger
         self.consumer_config = consumer_config
         self.tcp_socket = None
@@ -12,7 +13,7 @@ class CIPServer:
         self.last_sequence_numbers = {}
         self.flight_times = []  # Store recent flight times for standard deviation calculation
         self.max_flight_time_samples = 500  # Maximum number of flight times to store
-        
+
     def start(self):
         """Start the TCP and UDP server."""
         self.running = True
@@ -127,12 +128,11 @@ class CIPServer:
                     rcvd_timestamp = datetime.now()
                     tag, received_seq_num, sent_timestamp = data.decode().split(',')
                     received_seq_num = int(received_seq_num)
-
                     # Convert sent timestamp to datetime
                     packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
 
                     # Calculate flight time in milliseconds
-                    flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
+                    flight_time_ms = ((rcvd_timestamp) - packet_timestamp).total_seconds() * 1000
                     print(f"[DEBUG] Flight time calculated: {flight_time_ms} ms")
 
                     # Verify positive flight time and detect outliers

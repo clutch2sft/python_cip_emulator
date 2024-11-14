@@ -31,7 +31,8 @@ class CIPEmulator:
 
         # Initialize TimeSyncServer for time synchronization support if a server logger is provided
         self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if logger_server else None
-        self.tsync_server.start()
+        if self.tsync_server is not None:
+            self.tsync_server.start()
         # Initialize CIPServer if a server logger is provided
         self.server = CIPServer(self.server_logger, consumer_config) if logger_server else None
 
@@ -40,7 +41,7 @@ class CIPEmulator:
         for client_tag, producer_config in producers_config.items():
             # Create a specific logger for each client
             producer_logger = self._create_client_logger(client_tag)
-            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet)
+            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet, logger_app=self.logger_app)
             self.producers.append(producer)
 
         # Placeholder for TimeSyncClient instance (created in start_all_clients)

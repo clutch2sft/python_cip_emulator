@@ -2,9 +2,9 @@ import socket
 import threading
 import time
 from datetime import datetime, timedelta
-
+from core.time.driftcorrection import DriftCorrectorBorg
 class CIPClient:
-    def __init__(self, logger, producer_config, tag, quiet = False):
+    def __init__(self, logger, producer_config, tag, quiet = False, logger_app = None):
         self.logger = logger
         self.config = producer_config
         self.tag = tag
@@ -20,7 +20,7 @@ class CIPClient:
         self.running = False
         self.tcp_connected = threading.Event()
         self.quiet = quiet
-
+        self.drift_corrector = DriftCorrectorBorg(network_latency_ns=30000000, logger_app=logger_app)
         # Retrieve QoS (DSCP value) from config, defaulting to 0 if not provided
         self.qos = self.config.get("qos", 0)
         if not (0 <= self.qos <= 63):
@@ -124,19 +124,25 @@ class CIPClient:
                     self.sequence_number += 1
                     continue
 
-                
-                # Construct message and apply padding if needed
                 timestamp = datetime.now()
-                
+                #get the client clock drift in nanoseconds - this number could be positive or negative depending on if the client is ahead or behind the server.
+                clock_diff = self.drift_corrector.get_drift()
+                # Convert nanoseconds to microseconds (1 microsecond = 1000 nanoseconds)
+                microseconds_to_add = clock_diff / 1000
+                # Create a timedelta object with the microseconds
+                time_adjustment = timedelta(microseconds=microseconds_to_add)
+                # Add the timedelta to the original time
+                adjusted_time = timestamp + time_adjustment
+
                 # Adjust timestamp for every 11th packet to create an outlier
                 if self.enable_packet_skip and self.sequence_number % 11 == 0:
-                    print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {timestamp}")
-                    timestamp -= timedelta(seconds=2)  # Subtract 2 seconds to create an outlier
-                    print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {timestamp}")
+                    print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {adjusted_time}")
+                    adjusted_time -= timedelta(seconds=2)  # Subtract 2 seconds to create an outlier
+                    print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {adjusted_time}")
                     self.logger(f"Adjusted timestamp for sequence {self.sequence_number} to create an outlier", level="INFO")
                 
                 # Format the timestamp as a string after adjustment, if any
-                timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")
+                timestamp_str = adjusted_time.strftime("%Y-%m-%d %H:%M:%S.%f")
                 # Construct message and apply padding if needed
                 message = f"{self.tag},{self.sequence_number},{timestamp_str}"
                 message_bytes = message.encode()

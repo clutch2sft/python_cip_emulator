@@ -14,7 +14,7 @@ class TimeSyncClient:
         self.logger_app = logger_app
         self.network_latency_ns = network_latency_ns
         self.txrate = txrate
-        self.debug = True
+        self.debug = debug
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.LINGER, 0)  # Set linger to 0 to avoid blocking on close
@@ -165,10 +165,10 @@ class TimeSyncClient:
                     self.latency_smoother.add_rtt_sample(round_trip_time_ns)
 
                     # Use the smoothed latency (one-way) and adjust server timestamp
-                    smoothed_latency_ns = self.latency_smoother.get_smoothed_latency() // 2
+                    smoothed_latency_ns, half_smoothed_latency = self.latency_smoother.get_smoothed_latency()
 
                     if smoothed_latency_ns > 0:  # Only proceed if latency is non-zero
-                        adjusted_server_timestamp_ns = server_timestamp_ns + smoothed_latency_ns
+                        adjusted_server_timestamp_ns = server_timestamp_ns + half_smoothed_latency
 
                         # Calculate and correct timing discrepancy
                         discrepancy_ns = client_receive_time_ns - adjusted_server_timestamp_ns
@@ -176,41 +176,49 @@ class TimeSyncClient:
                         self.drift_corrector.add_discrepancy(abs(discrepancy_ns), client_ahead)
 
                         # Calculate relative deviation to determine latency stability
-                        relative_deviation_threshold = 0.3  # Example threshold: 30%
-                        relative_deviation = abs(round_trip_time_ns - (smoothed_latency_ns * 2)) / (smoothed_latency_ns * 2)
+                        relative_deviation_threshold = 0.5  # Example threshold: 30%
+                        relative_deviation = abs(round_trip_time_ns - (half_smoothed_latency * 2)) / (half_smoothed_latency * 2)
 
                         if relative_deviation > relative_deviation_threshold:
                             # Detected instability (e.g., roaming event or latency spike)
                             unstable_count += 1
-                            stable_count = 0
+                            self.logger_app.info(f"{self.class_name}: Unstable entry found Stable Count:{stable_count} Unstable Count: {unstable_count}")
+                            stable_count -= stable_count  # Reset stable count on instability
                             if unstable_count >= stable_threshold:
+                                stable_count = 0
                                 self.txrate = initial_txrate  # Temporarily increase txrate for frequent sampling
                                 self.stability_detected = False  # Reset stability flag due to detected instability
-                                self.logger_app.warning(f"{formatted_time} {self.class_name}: Instability detected, txrate adjusted to {initial_txrate} Unstable count:{unstable_count}")
+                                if unstable_count == stable_threshold + 1:
+                                    self.logger_app.warning(
+                                        f"{formatted_time} {self.class_name}: Instability detected, txrate adjusted to {initial_txrate} "
+                                        f"Unstable count:{unstable_count} Relative Deviation: {relative_deviation} RTT: {round_trip_time_ns / 1_000_000}"
+                                    )
                                 if self.debug:
                                     self.logger_app.info(f"{self.class_name}: Relative deviation is {relative_deviation}")
                                     self.logger_app.info(
-                                        f"Client Request Time:{self.format_timestamp_ns(client_request_time_ns)} " 
-                                        f"Client Receive Time:{self.format_timestamp_ns(client_receive_time_ns)} " 
-                                        f"Server Time:{self.format_timestamp_ns(server_timestamp_ns)} " 
-                                        f"Smoothed Latency:{smoothed_latency_ns} " 
-                                        f"This RTT:{round_trip_time_ns} " 
-                                        f"Adjusted Server Time:{self.format_timestamp_ns(adjusted_server_timestamp_ns)} " 
-                                        f"Relative Deviation:{relative_deviation} " 
-                                        f"Deviation Threshold:{relative_deviation_threshold} " 
+                                        f"Client Request Time:{self.format_timestamp_ns(client_request_time_ns)} "
+                                        f"Client Receive Time:{self.format_timestamp_ns(client_receive_time_ns)} "
+                                        f"Server Time:{self.format_timestamp_ns(server_timestamp_ns)} "
+                                        f"Smoothed Latency/Half Smoothed Latency/RTT: {smoothed_latency_ns / 1_000_000}ms/{half_smoothed_latency / 1_000_000}ms/{round_trip_time_ns / 1_000_000}ms "
+                                        f"Adjusted Server Time:{self.format_timestamp_ns(adjusted_server_timestamp_ns)} "
+                                        f"Relative Deviation:{relative_deviation} "
+                                        f"Deviation Threshold:{relative_deviation_threshold} "
                                     )
                         else:
                             # Detected stability
-                            unstable_count = 0
-                            stable_count += 1
-                            self.logger_app.info(f"{formatted_time} {self.class_name}: Stability detected, stable count {stable_count}")
-                            if stable_count >= stable_threshold:
-                                # Once stable, set txrate based on smoothed latency and initial_txrate
-                                lower_txrate = max(initial_txrate * adaptive_lower_txrate_factor, 
-                                                smoothed_latency_ns / 1_000_000 * 0.005)  # Example dynamic adjustment
-                                self.txrate = lower_txrate  # Lower txrate for stable conditions
-                                self.stability_detected = True  # Set stability flag after reaching stable conditions
-                                self.logger_app.info(f"{formatted_time} {self.class_name}: Stability detected, txrate adjusted to {lower_txrate}")
+                            if not self.stability_detected:  # Only adjust if stability wasn't previously detected
+                                stable_count += 1
+                                self.logger_app.info(f"{self.class_name}: Stability detected, stable count {stable_count} {formatted_time}")
+                                if stable_count >= stable_threshold:
+                                    # Once stable, set txrate based on smoothed latency and initial_txrate
+                                    lower_txrate = max(initial_txrate * adaptive_lower_txrate_factor, 
+                                                    smoothed_latency_ns / 1_000_000 * 0.005)  # Example dynamic adjustment
+                                    self.txrate = lower_txrate  # Lower txrate for stable conditions
+                                    self.stability_detected = True  # Set stability flag after reaching stable conditions
+                                    self.logger_app.info(f"{self.class_name}: Stability detected, txrate adjusted to {lower_txrate} {formatted_time}")
+                            else:
+                                stable_count += 1  # Increment stable count but avoid redundant adjustments
+
                     else:
                         self.logger_app.warning(f"{self.class_name}: Smoothed latency is zero; skipping stability calculations.")
 
