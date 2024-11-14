@@ -79,7 +79,7 @@ class CIPServer:
         
         # Ensure flight time is non-negative
         if flight_time_ms < 0:
-            print(f"[DEBUG] Negative flight time detected: {flight_time_ms}ms")
+            #print(f"[DEBUG] Negative flight time detected: {flight_time_ms}ms")
             return False, None, None
         
         # Only compute outliers if we have enough samples
@@ -88,7 +88,7 @@ class CIPServer:
             stdev_flight_time = statistics.stdev(self.flight_times)
 
             # Debug log for calculated mean and standard deviation
-            print(f"[DEBUG] Mean flight time: {mean_flight_time} ms, StDev: {stdev_flight_time} ms")
+            #print(f"[DEBUG] Mean flight time: {mean_flight_time} ms, StDev: {stdev_flight_time} ms")
 
             # Set the outlier threshold (mean + 2*stdev)
             threshold = mean_flight_time + 2 * stdev_flight_time
@@ -133,7 +133,7 @@ class CIPServer:
 
                     # Calculate flight time in milliseconds
                     flight_time_ms = ((rcvd_timestamp) - packet_timestamp).total_seconds() * 1000
-                    print(f"[DEBUG] Flight time calculated: {flight_time_ms} ms")
+                    #print(f"[DEBUG] Flight time calculated: {flight_time_ms} ms")
 
                     # Verify positive flight time and detect outliers
                     is_outlier, mean, stdev = self._check_flight_time_outlier(flight_time_ms)
