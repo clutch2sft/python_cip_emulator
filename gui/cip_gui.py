@@ -151,7 +151,6 @@ class CIPGUI:
             print(f"[ERROR] No log queue found for client '{client_tag}'")
 
     def start_server(self):
-        self.tsync_server.start()
         if not self.server_running.is_set():
             self.server_running.set()
             self.consumer_log_window, self.server_log_display = self.create_log_window("Consumer Log")
@@ -170,7 +169,6 @@ class CIPGUI:
             self.log_server_message(f"Error starting server: {e}", level="ERROR")
 
     def stop_server(self):
-        self.tsync_server.stop()
         if self.server_running.is_set():
             self.server_running.clear()
             try:
@@ -246,7 +244,7 @@ class CIPGUI:
 
     def _start_all_clients_thread(self):
         try:
-            self.emulator.start_all_clients()
+            self.emulator.start_gui_clients()  # Use GUI-specific start method
             for client_tag in self.producers_config:
                 self.log_client_message(message="Client started successfully", client_tag=client_tag)
         except Exception as e:
@@ -257,7 +255,7 @@ class CIPGUI:
         if self.client_running.is_set():
             self.client_running.clear()
             try:
-                self.emulator.stop_all_clients()
+                self.emulator.stop_gui_clients()  # Use GUI-specific stop method
                 for client_tag in list(self.client_log_windows.keys()):
                     self._close_log_window(client_tag)
                 print("All client log windows closed.")
@@ -267,6 +265,7 @@ class CIPGUI:
             finally:
                 self.start_client_button.config(state=tk.NORMAL)
                 self.stop_client_button.config(state=tk.DISABLED)
+
 
     def update_log_display(self):
         with self.log_update_lock:

@@ -109,7 +109,7 @@ def main():
             # Keep CLI running until interrupted
             emulator_logger.info("Main entry function: Press Ctrl+C to stop the emulator.")
             while True:
-                time.sleep(0.1)  # Short sleep to reduce CPU usage if loop is empty
+                time.sleep(0.5)  # Short sleep to reduce CPU usage if loop is empty
                     # Alternatively, add a condition to exit this loop if needed
                 pass
 

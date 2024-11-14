@@ -37,6 +37,7 @@ class CIPClient:
 
     def stop(self):
         """Stop the client and close connections gracefully."""
+        self.logger(f"This cip client is shutting down {self.tag} avg clock drift is currently: {self.drift_corrector.get_drift}", level="NOTICE")
         self.running = False
         self.tcp_connected.clear()
 
