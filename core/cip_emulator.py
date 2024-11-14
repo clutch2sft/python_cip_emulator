@@ -44,7 +44,7 @@ class CIPEmulator:
         for client_tag, producer_config in producers_config.items():
             # Create a specific logger for each client
             producer_logger = self._create_client_logger(client_tag)
-            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet, logger_app=self.logger_app, filter_factor=self.filter_factor)
+            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet, logger_app=self.logger_app)
             self.producers.append(producer)
 
         # Placeholder for TimeSyncClient instance (created in start_all_clients or start_gui_clients)
@@ -107,7 +107,8 @@ class CIPEmulator:
                     server_ip=self.consumer_config.get("server_ip"),
                     logger_app=self.logger_app,
                     server_port=self.consumer_config.get("time_sync_port", 5555),
-                    txrate=0.1
+                    txrate=0.1,
+                    filter_factor=self.filter_factor
                 )
                 self.logger_app.info(f"{self.class_name}: Attempting to start Time Sync Client.")
                 
