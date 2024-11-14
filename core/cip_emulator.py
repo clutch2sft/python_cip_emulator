@@ -24,6 +24,7 @@ class CIPEmulator:
         self.gui_mode = gui_mode
         self.quiet = quiet
         self.logger_app = logger_app
+        self.filter_factor=self.consumer_config.get("latency_filter_factor") #its a bit in the wrong place but it also doesn't make sense to put it in multiple times under each client.
         self.class_name = self.__class__.__name__
         
         # Set up the server logger or placeholder null logger
@@ -43,7 +44,7 @@ class CIPEmulator:
         for client_tag, producer_config in producers_config.items():
             # Create a specific logger for each client
             producer_logger = self._create_client_logger(client_tag)
-            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet, logger_app=self.logger_app)
+            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet, logger_app=self.logger_app, filter_factor=self.filter_factor)
             self.producers.append(producer)
 
         # Placeholder for TimeSyncClient instance (created in start_all_clients or start_gui_clients)

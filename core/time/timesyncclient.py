@@ -8,7 +8,7 @@ from zmq import EVENT_CONNECTED, EVENT_DISCONNECTED, EVENT_CLOSED
 from textwrap import dedent
 
 class TimeSyncClient:
-    def __init__(self, server_ip, logger_app, server_port=5555, network_latency_ns=30000000, txrate=0.1, debug=False):
+    def __init__(self, server_ip, logger_app, server_port=5555, network_latency_ns=30000000, txrate=0.1, debug=False, filter_factor=2):
         self.server_ip = server_ip
         self.server_port = server_port
         self.logger_app = logger_app
@@ -28,7 +28,7 @@ class TimeSyncClient:
         self.class_name = self.__class__.__name__
         # Initialize drift corrector and latency smoother
         self.drift_corrector = DriftCorrectorBorg(network_latency_ns=network_latency_ns, logger_app=self.logger_app)
-        self.latency_smoother = LatencySmoother(max_samples=100, filter_factor=2, logger_app=self.logger_app)
+        self.latency_smoother = LatencySmoother(max_samples=100, filter_factor=filter_factor, logger_app=self.logger_app)
         self.initialized = True
 
     def setup_socket_monitor(self):
