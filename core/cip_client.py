@@ -130,7 +130,7 @@ class CIPClient:
                 # Convert nanoseconds to microseconds (1 microsecond = 1000 nanoseconds)
                 microseconds_to_add = clock_diff / 1000
                 # Create a timedelta object with the microseconds
-                time_adjustment = timedelta(microseconds=microseconds_to_add)
+                time_adjustment = timedelta(microseconds=(microseconds_to_add*-1))
                 # Add the timedelta to the original time
                 adjusted_time = timestamp + time_adjustment
 
