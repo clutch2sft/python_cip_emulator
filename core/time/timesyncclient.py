@@ -116,6 +116,15 @@ class TimeSyncClient:
                 self.stop()  # Stop on critical error
                 break
 
+    def is_stable(self):
+        """Return whether stability has been detected."""
+        if self.stability_detected:
+            self.logger_app.info(f"{self.class_name}: is_stable: Stability is detected by time sync client.")
+        else:
+            if self.debug:
+                self.logger_app.info(f"{self.class_name}: NOT STABLE: Returning current state.")
+        return self.stability_detected
+
     def get_corrected_time(self):
         corrected_drift_ns = self.drift_corrector.calculate_mean_drift()
         client_time_ns = time.time_ns()
