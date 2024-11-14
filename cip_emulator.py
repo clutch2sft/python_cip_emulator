@@ -55,7 +55,7 @@ def main():
         from gui.cip_gui import CIPGUI
         emulator_logger = create_logger(f"{hostname }_emulator")
         emulator_logger.info("Main entry function: Starting CIP Emulator in GUI mode.")
-        gui = CIPGUI(config_path=CONFIG_PATH)
+        gui = CIPGUI(config_path=CONFIG_PATH, logger_app=emulator_logger)
         gui.run()  # Start the GUI
         return
 

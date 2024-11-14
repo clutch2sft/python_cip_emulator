@@ -29,9 +29,9 @@ class CIPEmulator:
         self.server_logger = self._create_logger_adapter(logger_server) if logger_server else self._null_logger
         self.logger_client = logger_client or {}
 
-        # Initialize TimeSyncServer for time synchronization support if a server logger is provided
-        self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if logger_server else None
-        if self.tsync_server is not None:
+        # Initialize TimeSyncServer for time synchronization support if not gui mode
+        if not gui_mode:
+            self.tsync_server = TimeSyncServer(logger_app=self.logger_app)
             self.tsync_server.start()
         # Initialize CIPServer if a server logger is provided
         self.server = CIPServer(self.server_logger, consumer_config) if logger_server else None

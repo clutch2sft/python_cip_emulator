@@ -10,7 +10,7 @@ from utils.logger import create_logger
 import gc, socket
 
 class CIPGUI:
-    def __init__(self, config_path):
+    def __init__(self, config_path, logger_app=None):
         self.root = tk.Tk()
         self.root.title("CIP Emulator")
 
@@ -29,6 +29,7 @@ class CIPGUI:
             consumer_config=self.consumer_config,
             logger_server=self.log_server_message,
             logger_client=self.log_client_message,
+            logger_app=logger_app,
             gui_mode=True
         )
 
@@ -150,6 +151,7 @@ class CIPGUI:
             print(f"[ERROR] No log queue found for client '{client_tag}'")
 
     def start_server(self):
+        self.tsync_server.start()
         if not self.server_running.is_set():
             self.server_running.set()
             self.consumer_log_window, self.server_log_display = self.create_log_window("Consumer Log")
@@ -168,6 +170,7 @@ class CIPGUI:
             self.log_server_message(f"Error starting server: {e}", level="ERROR")
 
     def stop_server(self):
+        self.tsync_server.stop()
         if self.server_running.is_set():
             self.server_running.clear()
             try:
