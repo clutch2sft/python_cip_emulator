@@ -1,73 +1,96 @@
-# client.py
+# rtt_client.py
 import socket
 import time
-import statistics
+import threading
+from net_latency import NetLatency
 
-def calculate_rtt(host='172.16.5.163', port=65432, message="ping", num_pings=5, protocol='udp'):
-    rtts = []  # List to store all RTT values
+class RTTClient:
+    _instance = None
+    _lock = threading.Lock()  # Thread-safe singleton lock
 
-    # Choose socket type based on protocol
-    if protocol.lower() == 'tcp':
-        sock_type = socket.SOCK_STREAM
-    elif protocol.lower() == 'udp':
-        sock_type = socket.SOCK_DGRAM
-    else:
-        raise ValueError("Invalid protocol specified. Use 'tcp' or 'udp'.")
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = super(RTTClient, cls).__new__(cls)
+        return cls._instance
 
-    with socket.socket(socket.AF_INET, sock_type) as client_socket:
-        client_socket.settimeout(1)  # Set timeout to 1 second
-        
-        # For TCP, establish the connection before sending data
-        if protocol.lower() == 'tcp':
-            client_socket.connect((host, port))
+    def __init__(self, host='127.0.0.1', port=65432, protocol='udp', num_pings=250):
+        if not hasattr(self, 'initialized'):  # Ensure `__init__` runs only once
+            self.host = host
+            self.port = port
+            self.protocol = protocol.lower()
+            self.num_pings = num_pings
+            self.latency_tracker = NetLatency()
+            self.running = False  # Track whether the client is currently running
+            self.initialized = True
+            self._thread = None  # Thread for running start() non-blocking
 
-        for i in range(num_pings):
-            try:
-                # Record send time
-                send_time = time.time()
-                
-                if protocol.lower() == 'udp':
-                    client_socket.sendto(message.encode(), (host, port))
-                    data, _ = client_socket.recvfrom(1024)
-                elif protocol.lower() == 'tcp':
-                    client_socket.sendall(message.encode())
-                    data = client_socket.recv(1024)
+    def start(self):
+        """Start the RTT measurement process in a non-blocking way."""
+        with RTTClient._lock:  # Thread-safe check and set for `running`
+            if self.running:
+                print("RTTClient is already running.")
+                return
 
-                receive_time = time.time()
-                
-                # Calculate RTT and add to list
-                rtt = (receive_time - send_time) * 1000  # RTT in milliseconds
-                rtts.append(rtt)
-                print(f"Ping {i+1}: RTT = {rtt:.2f} ms")
+            self.running = True
+            # Start a separate thread for the RTT measurement process
+            self._thread = threading.Thread(target=self._run_rtt_measurement)
+            self._thread.start()
 
-            except socket.timeout:
-                print(f"Ping {i+1}: Request timed out")
-                rtts.append(None)  # Add None for timed-out pings for completeness
+    def _run_rtt_measurement(self):
+        """Internal method to perform RTT measurements."""
+        sock_type = socket.SOCK_STREAM if self.protocol == 'tcp' else socket.SOCK_DGRAM
 
-        # TCP-specific: Close the connection
-        if protocol.lower() == 'tcp':
-            client_socket.close()
+        try:
+            with socket.socket(socket.AF_INET, sock_type) as client_socket:
+                client_socket.settimeout(1)  # Set a 1-second timeout
 
-    # Filter out None values (timeouts) for statistics calculation
-    valid_rtts = [rtt for rtt in rtts if rtt is not None]
+                # Establish connection for TCP
+                if self.protocol == 'tcp':
+                    client_socket.connect((self.host, self.port))
 
-    if valid_rtts:
-        # Calculate mean and standard deviation
-        mean_rtt = statistics.mean(valid_rtts)
-        std_dev_rtt = statistics.stdev(valid_rtts) if len(valid_rtts) > 1 else 0.0
+                for i in range(self.num_pings):
+                    if not self.running:  # Check if stop() was called
+                        break
 
-        # Determine outliers (2 standard deviations from the mean)
-        outliers = [rtt for rtt in valid_rtts if abs(rtt - mean_rtt) > 2 * std_dev_rtt]
+                    try:
+                        send_time = time.time()
 
-        print("\nRTT Statistics:")
-        print(f"Mean RTT: {mean_rtt:.2f} ms")
-        print(f"Standard Deviation: {std_dev_rtt:.2f} ms")
-        print(f"Number of Outliers: {len(outliers)}")
-        if outliers:
-            print(f"Outliers: {[f'{rtt:.2f} ms' for rtt in outliers]}")
-    else:
-        print("No successful pings to calculate statistics.")
+                        if self.protocol == 'udp':
+                            client_socket.sendto(b"ping", (self.host, self.port))
+                            data, _ = client_socket.recvfrom(1024)
+                        elif self.protocol == 'tcp':
+                            client_socket.sendall(b"ping")
+                            data = client_socket.recv(1024)
 
-if __name__ == "__main__":
-    # Call with `protocol='tcp'` to test TCP, or `protocol='udp'` for UDP
-    calculate_rtt(num_pings=500, protocol='tcp')
+                        receive_time = time.time()
+                        rtt = (receive_time - send_time) * 1000  # RTT in milliseconds
+                        print(f"Ping {i+1}: RTT = {rtt:.2f} ms")
+                        self.latency_tracker.add_rtt(rtt)
+
+                    except socket.timeout:
+                        print(f"Ping {i+1}: Request timed out")
+                        self.latency_tracker.add_rtt(None)  # Track timeout as None
+
+        finally:
+            # Ensure that the client can be started again after finishing
+            self.running = False
+
+    def stop(self):
+        """Stop the RTT measurement process if it is running."""
+        with RTTClient._lock:
+            if self.running:
+                print("Stopping RTTClient...")
+                self.running = False  # This will stop the measurement loop
+                if self._thread:
+                    self._thread.join()  # Wait for the thread to finish
+                print("RTTClient stopped.")
+
+    def get_latency_statistics(self):
+        """Retrieve RTT statistics from NetLatency."""
+        return self.latency_tracker.get_statistics()
+
+    def clear_latency_data(self):
+        """Clear all RTT data in NetLatency."""
+        self.latency_tracker.clear()
