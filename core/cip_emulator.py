@@ -1,7 +1,7 @@
 from core.cip_server import CIPServer
 from core.cip_client import CIPClient
-from core.time.timesyncserver import TimeSyncServer
-from core.time.timesyncclient import TimeSyncClient
+from core.time.server.timesyncserver import TimeSyncServer
+from core.time.client.timesyncclient import TimeSyncClient
 import time
 import atexit
 

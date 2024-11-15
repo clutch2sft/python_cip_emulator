@@ -2,14 +2,31 @@ import time
 import grpc
 from concurrent import futures
 import threading
-import timesync_pb2
-import timesync_pb2_grpc
+from core.time.server import timesync_pb2
+from  core.time.server import timesync_pb2_grpc
 
 
 class TimeSyncService(timesync_pb2_grpc.TimeSyncServiceServicer):
     def __init__(self, logger_app=None, debug=False):
         self.logger = logger_app
         self.debug = debug
+        self.start_time = time.time()
+        self.request_count = 0
+        self.total_response_time = 0.0
+
+    def RequestTimestamp(self, request, context):
+        """Handles client requests for server time."""
+        start_processing_time = time.time()
+        self.request_count += 1
+
+        timestamp_ns = time.time_ns()
+        if self.debug:
+            self.logger.info(f"TimeSyncService: Sending timestamp: {timestamp_ns}")
+
+        # Update response time stats
+        self.total_response_time += (time.time() - start_processing_time) * 1000  # Convert to ms
+
+        return timesync_pb2.TimeResponse(timestamp_ns=timestamp_ns)
 
     def RequestTimestamp(self, request, context):
         """Handles client requests for server time."""
@@ -19,9 +36,22 @@ class TimeSyncService(timesync_pb2_grpc.TimeSyncServiceServicer):
         return timesync_pb2.TimeResponse(timestamp_ns=timestamp_ns)
 
     def CheckHealth(self, request, context):
-        """Simple health check endpoint."""
-        return timesync_pb2.HealthCheckResponse(healthy=True)
+        """Returns server health and stats."""
+        uptime_seconds = int(time.time() - self.start_time)
+        avg_response_time_ms = (self.total_response_time / self.request_count) if self.request_count > 0 else 0.0
 
+        if self.debug:
+            self.logger.info(
+                f"TimeSyncService: Health check - Uptime: {uptime_seconds}s, "
+                f"Requests: {self.request_count}, Avg Response Time: {avg_response_time_ms:.3f}ms"
+            )
+
+        return timesync_pb2.HealthCheckResponse(
+            healthy=True,
+            uptime_seconds=uptime_seconds,
+            request_count=self.request_count,
+            avg_response_time_ms=avg_response_time_ms
+        )
 
 class TimeSyncServer:
     _instance = None  # Singleton instance
@@ -65,9 +95,8 @@ class TimeSyncServer:
 
     def _monitor_server(self):
         """Monitor server activity and log if in debug mode."""
-        while self.running:
-            if self.debug:
-                self.logger.info("TimeSyncServer: Running and ready to accept requests.")
+        while self.running and self.debug:
+            self.logger.info("TimeSyncServer: Running and ready to accept requests.")
             time.sleep(5)
 
     def close(self):

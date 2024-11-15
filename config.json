@@ -7,13 +7,13 @@
         "udp_port": 2222,
         "buffer_size": 1024,
         "tcp_keepalive_multiplier": 10,
-        "server_ip": "172.16.5.163",
+        "server_ip": "172.16.5.105",
         "time_sync_port": 5555,
         "latency_filter_factor": 3
     },
     "producers": {  
         "CIP_IO1": {
-            "ip": "172.16.5.163",
+            "ip": "172.16.5.105",
             "packet_interval_ms": 100,
             "enable_packet_skip": false,
             "qos": 43,
@@ -22,7 +22,7 @@
             "udp_srcport": 2222
         },
         "CIP_Safety": { 
-            "ip": "172.16.5.163",
+            "ip": "172.16.5.105",
             "packet_interval_ms": 200,
             "enable_packet_skip": false,
             "qos": 47,

@@ -4,8 +4,8 @@ import threading
 from datetime import datetime
 from core.time.driftcorrection import DriftCorrectorBorg
 from core.time.latencysmoother import LatencySmoother
-import timesync_pb2
-import timesync_pb2_grpc
+from core.time.server import timesync_pb2
+from  core.time.server import timesync_pb2_grpc
 
 
 class TimeSyncClient:
@@ -34,6 +34,15 @@ class TimeSyncClient:
         try:
             response = self.stub.CheckHealth(timesync_pb2.HealthCheckRequest(), timeout=5.0)
             self.server_reachable = response.healthy
+
+            # Log the metrics
+            self.logger_app.info(
+                f"{self.class_name}: Health check successful. "
+                f"Server Uptime: {response.uptime_seconds}s, "
+                f"Requests Handled: {response.request_count}, "
+                f"Average Response Time: {response.avg_response_time_ms:.2f}ms"
+            )
+
             return response.healthy
         except grpc.RpcError as e:
             self.logger_app.error(f"{self.class_name}: Health check failed with error: {e}")

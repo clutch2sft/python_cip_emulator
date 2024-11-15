@@ -2,7 +2,7 @@
 import socket
 import time
 import threading
-from net_latency import NetLatency
+from core.time.scratch.net_latency import NetLatency
 
 class RTTClient:
     _instance = None

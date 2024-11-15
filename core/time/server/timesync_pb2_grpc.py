@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import timesync_pb2 as timesync__pb2
+from core.time.server import timesync_pb2 as core_dot_time_dot_proto_dot_timesync__pb2
 
 GRPC_GENERATED_VERSION = '1.67.1'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in timesync_pb2_grpc.py depends on'
+        + f' but the generated code in core/time/proto/timesync_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,13 +36,13 @@ class TimeSyncServiceStub(object):
         """
         self.RequestTimestamp = channel.unary_unary(
                 '/timesync.TimeSyncService/RequestTimestamp',
-                request_serializer=timesync__pb2.TimeRequest.SerializeToString,
-                response_deserializer=timesync__pb2.TimeResponse.FromString,
+                request_serializer=core_dot_time_dot_proto_dot_timesync__pb2.TimeRequest.SerializeToString,
+                response_deserializer=core_dot_time_dot_proto_dot_timesync__pb2.TimeResponse.FromString,
                 _registered_method=True)
         self.CheckHealth = channel.unary_unary(
                 '/timesync.TimeSyncService/CheckHealth',
-                request_serializer=timesync__pb2.HealthCheckRequest.SerializeToString,
-                response_deserializer=timesync__pb2.HealthCheckResponse.FromString,
+                request_serializer=core_dot_time_dot_proto_dot_timesync__pb2.HealthCheckRequest.SerializeToString,
+                response_deserializer=core_dot_time_dot_proto_dot_timesync__pb2.HealthCheckResponse.FromString,
                 _registered_method=True)
 
 
@@ -66,13 +66,13 @@ def add_TimeSyncServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'RequestTimestamp': grpc.unary_unary_rpc_method_handler(
                     servicer.RequestTimestamp,
-                    request_deserializer=timesync__pb2.TimeRequest.FromString,
-                    response_serializer=timesync__pb2.TimeResponse.SerializeToString,
+                    request_deserializer=core_dot_time_dot_proto_dot_timesync__pb2.TimeRequest.FromString,
+                    response_serializer=core_dot_time_dot_proto_dot_timesync__pb2.TimeResponse.SerializeToString,
             ),
             'CheckHealth': grpc.unary_unary_rpc_method_handler(
                     servicer.CheckHealth,
-                    request_deserializer=timesync__pb2.HealthCheckRequest.FromString,
-                    response_serializer=timesync__pb2.HealthCheckResponse.SerializeToString,
+                    request_deserializer=core_dot_time_dot_proto_dot_timesync__pb2.HealthCheckRequest.FromString,
+                    response_serializer=core_dot_time_dot_proto_dot_timesync__pb2.HealthCheckResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -100,8 +100,8 @@ class TimeSyncService(object):
             request,
             target,
             '/timesync.TimeSyncService/RequestTimestamp',
-            timesync__pb2.TimeRequest.SerializeToString,
-            timesync__pb2.TimeResponse.FromString,
+            core_dot_time_dot_proto_dot_timesync__pb2.TimeRequest.SerializeToString,
+            core_dot_time_dot_proto_dot_timesync__pb2.TimeResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -127,8 +127,8 @@ class TimeSyncService(object):
             request,
             target,
             '/timesync.TimeSyncService/CheckHealth',
-            timesync__pb2.HealthCheckRequest.SerializeToString,
-            timesync__pb2.HealthCheckResponse.FromString,
+            core_dot_time_dot_proto_dot_timesync__pb2.HealthCheckRequest.SerializeToString,
+            core_dot_time_dot_proto_dot_timesync__pb2.HealthCheckResponse.FromString,
             options,
             channel_credentials,
             insecure,

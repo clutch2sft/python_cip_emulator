@@ -16,5 +16,8 @@ message TimeResponse {
 message HealthCheckRequest {}
 
 message HealthCheckResponse {
-  bool healthy = 1;
+  bool healthy = 1;          // Server health status
+  int64 uptime_seconds = 2;  // Server uptime in seconds
+  int64 request_count = 3;   // Total number of requests served
+  double avg_response_time_ms = 4; // Average response time in milliseconds
 }
