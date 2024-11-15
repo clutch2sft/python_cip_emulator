@@ -23,17 +23,16 @@ class DriftCorrectorBorg:
 
     def _calculate_mean_and_std(self):
         """Calculate mean and standard deviation of current discrepancies."""
-        with self.lock:  # Ensure thread safety
-            if not self.discrepancies:
+        # No lock here; ensure thread safety by locking externally
+        if not self.discrepancies:
+            if self.logger_app:
                 self.logger_app.warning(f"{self.class_name}: There are no discrepancies to work with")
-                return 0, 0  # Return 0s if there are no discrepancies
+            return 0, 0  # Return 0s if there are no discrepancies
 
-            mean = sum(self.discrepancies) / len(self.discrepancies)
-            variance = sum((x - mean) ** 2 for x in self.discrepancies) / len(self.discrepancies)
-            std_dev = math.sqrt(variance)
-            self.meandrift = mean
-            self.stddeviation = std_dev
-            return mean, std_dev
+        mean = sum(self.discrepancies) / len(self.discrepancies)
+        variance = sum((x - mean) ** 2 for x in self.discrepancies) / len(self.discrepancies)
+        std_dev = math.sqrt(variance)
+        return mean, std_dev
 
     def add_discrepancy(self, discrepancy_ns, client_ahead):
         """Add a discrepancy, filtering out outliers."""
@@ -45,10 +44,18 @@ class DriftCorrectorBorg:
             # Only apply outlier filtering if we have enough samples
             if len(self.discrepancies) < self.min_samples_for_outlier_check or abs(signed_discrepancy - mean) <= self.filter_factor * std_dev:
                 self.discrepancies.append(signed_discrepancy)
-                if self.debug:
-                    self.logger_app.info(f"{self.class_name}: Added discrepancy: {signed_discrepancy / 1_000_000}ms (mean: {mean / 1_000_000}ms, std_dev: {std_dev / 1_000_000}ms)")
+                self.meandrift, self.stddeviation = self._calculate_mean_and_std()  # Update cached values
+                if self.debug and self.logger_app:
+                    self.logger_app.info(
+                        f"{self.class_name}: Added discrepancy: {signed_discrepancy / 1_000_000}ms "
+                        f"(mean: {self.meandrift / 1_000_000}ms, std_dev: {self.stddeviation / 1_000_000}ms)"
+                    )
             else:
-                self.logger_app.warning(f"{self.class_name}: Discarded outlier discrepancy: {signed_discrepancy / 1_000_000}ms (mean: {mean / 1_000_000}ms, std_dev: {std_dev / 1_000_000}ms)")
+                if self.logger_app:
+                    self.logger_app.warning(
+                        f"{self.class_name}: Discarded outlier discrepancy: {signed_discrepancy / 1_000_000}ms "
+                        f"(mean: {mean / 1_000_000}ms, std_dev: {std_dev / 1_000_000}ms)"
+                    )
 
     def calculate_mean_drift(self):
         """Calculate mean drift and standard deviation for reporting."""

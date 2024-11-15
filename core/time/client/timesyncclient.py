@@ -18,9 +18,9 @@ class TimeSyncClient:
         self.server_reachable = False
         self.running = False
         self.stability_detected = False
-        self.thread_pool = ThreadPoolExecutor(max_workers=5)  # Shared thread pool
-        self.min_samples_required = 50
-        self.warm_up_samples = 60
+        self.thread_pool = ThreadPoolExecutor(max_workers=10)  # Shared thread pool
+        self.min_samples_required = 10
+        self.warm_up_samples = 10
         self.condition = threading.Condition()
         self.class_name = self.__class__.__name__
 
@@ -84,7 +84,7 @@ class TimeSyncClient:
                 # Process response, calculate round-trip time, and adjust server timestamp
                 round_trip_time_ns = client_receive_time_ns - client_request_time_ns
 
-                if self.latency_smoother.sample_count() < self.warm_up_samples:
+                if self.latency_smoother.get_sample_count() < self.warm_up_samples:
                     self.latency_smoother.add_rtt_sample(round_trip_time_ns)
                     self.logger_app.info(
                         f"{self.class_name}: Collecting warm-up samples ({self.latency_smoother.get_sample_count()}/{self.warm_up_samples})"
