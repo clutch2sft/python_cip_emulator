@@ -61,6 +61,7 @@ class TimeSyncClient:
 
     def stop(self):
         """Stop the time synchronization process."""
+        self.check_health()
         self.logger_app.info(f"{self.class_name} stop(): Stop called.")
         self.running = False
         if self.thread is not None and self.thread.is_alive():
