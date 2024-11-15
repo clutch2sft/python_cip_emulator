@@ -268,24 +268,36 @@ class CIPGUI:
 
 
     def update_log_display(self):
+        """Batch and update logs to the GUI at regular intervals."""
         with self.log_update_lock:
-            if self.server_log_display:
-                while not self.server_log_queue.empty():
-                    message, tag = self.server_log_queue.get()
+            # Batch server logs
+            server_messages = []
+            while not self.server_log_queue.empty():
+                server_messages.append(self.server_log_queue.get())
+            
+            if self.server_log_display and server_messages:
+                for message, tag in server_messages:
                     if tag == "error" and "error" not in self.server_log_display.tag_names():
                         self.server_log_display.tag_configure("error", foreground="red")
                     self.server_log_display.insert("end", message + "\n", tag if tag else None)
-                    self.server_log_display.see("end")
+                self.server_log_display.see("end")
 
+            # Batch client logs
             for client_tag, (_, log_display) in self.client_log_windows.items():
+                client_messages = []
                 while not self.client_log_queues[client_tag].empty():
-                    message, tag = self.client_log_queues[client_tag].get()
-                    if tag == "error" and "error" not in log_display.tag_names():
-                        log_display.tag_configure("error", foreground="red")
-                    log_display.insert("end", message + "\n", tag if tag else None)
+                    client_messages.append(self.client_log_queues[client_tag].get())
+                
+                if log_display and client_messages:
+                    for message, tag in client_messages:
+                        if tag == "error" and "error" not in log_display.tag_names():
+                            log_display.tag_configure("error", foreground="red")
+                        log_display.insert("end", message + "\n", tag if tag else None)
                     log_display.see("end")
 
-        self.root.after(50, self.update_log_display)
+        # Schedule the next batch update
+        self.root.after(100, self.update_log_display)
+
 
     def update_edit_config_button_state(self):
         if self.server_running.is_set() or self.client_running.is_set():

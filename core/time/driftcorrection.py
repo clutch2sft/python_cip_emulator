@@ -37,40 +37,40 @@ class DriftCorrectorBorg:
     def add_discrepancy(self, discrepancy_ns, client_ahead):
         """Add a discrepancy, filtering out outliers."""
         signed_discrepancy = discrepancy_ns if client_ahead else -discrepancy_ns
-        with self.lock:  # Ensure thread safety
-            # Calculate current mean and standard deviation
-            mean, std_dev = self._calculate_mean_and_std()
+        #with self.lock:  # Ensure thread safety
+        # Calculate current mean and standard deviation
+        mean, std_dev = self._calculate_mean_and_std()
 
-            # Only apply outlier filtering if we have enough samples
-            if len(self.discrepancies) < self.min_samples_for_outlier_check or abs(signed_discrepancy - mean) <= self.filter_factor * std_dev:
-                self.discrepancies.append(signed_discrepancy)
-                self.meandrift, self.stddeviation = self._calculate_mean_and_std()  # Update cached values
-                if self.debug and self.logger_app:
-                    self.logger_app.info(
-                        f"{self.class_name}: Added discrepancy: {signed_discrepancy / 1_000_000}ms "
-                        f"(mean: {self.meandrift / 1_000_000}ms, std_dev: {self.stddeviation / 1_000_000}ms)"
-                    )
-            else:
-                if self.logger_app:
-                    self.logger_app.warning(
-                        f"{self.class_name}: Discarded outlier discrepancy: {signed_discrepancy / 1_000_000}ms "
-                        f"(mean: {mean / 1_000_000}ms, std_dev: {std_dev / 1_000_000}ms)"
-                    )
+        # Only apply outlier filtering if we have enough samples
+        if len(self.discrepancies) < self.min_samples_for_outlier_check or abs(signed_discrepancy - mean) <= self.filter_factor * std_dev:
+            self.discrepancies.append(signed_discrepancy)
+            self.meandrift, self.stddeviation = self._calculate_mean_and_std()  # Update cached values
+            if self.debug and self.logger_app:
+                self.logger_app.info(
+                    f"{self.class_name}: Added discrepancy: {signed_discrepancy / 1_000_000}ms "
+                    f"(mean: {self.meandrift / 1_000_000}ms, std_dev: {self.stddeviation / 1_000_000}ms)"
+                )
+        else:
+            if self.logger_app:
+                self.logger_app.warning(
+                    f"{self.class_name}: Discarded outlier discrepancy: {signed_discrepancy / 1_000_000}ms "
+                    f"(mean: {mean / 1_000_000}ms, std_dev: {std_dev / 1_000_000}ms)"
+                )
 
     def calculate_mean_drift(self):
         """Calculate mean drift and standard deviation for reporting."""
-        with self.lock:  # Ensure thread safety
-            mean, std_dev = self._calculate_mean_and_std()
-            # Adjust mean discrepancy by network latency for more accurate drift
-            corrected_drift = mean - self.network_latency_ns if mean > 0 else mean + self.network_latency_ns
-            return corrected_drift, std_dev
+        #with self.lock:  # Ensure thread safety
+        mean, std_dev = self._calculate_mean_and_std()
+        # Adjust mean discrepancy by network latency for more accurate drift
+        corrected_drift = mean - self.network_latency_ns if mean > 0 else mean + self.network_latency_ns
+        return corrected_drift, std_dev
 
     def get_drift(self):
         """Return the current mean drift."""
-        with self.lock:  # Ensure thread safety
-            return self.meandrift
+        #with self.lock:  # Ensure thread safety
+        return self.meandrift
 
     def get_sample_count(self):
         """Return the current number of discrepancies."""
-        with self.lock:  # Ensure thread safety
-            return len(self.discrepancies)
+        #with self.lock:  # Ensure thread safety
+        return len(self.discrepancies)
