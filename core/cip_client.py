@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 from core.time.driftcorrection import DriftCorrectorBorg
 
 class CIPClient:
-    def __init__(self, logger, producer_config, tag, quiet=False, logger_app=None):
+    def __init__(self, logger, producer_config, tag, quiet=False, logger_app=None, debug=False):
         self.logger = logger
         self.config = producer_config
         self.tag = tag
+        self.debug = debug
         self.packet_interval_ms = self.config.get("packet_interval_ms", 100)
         self.enable_packet_skip = self.config.get("enable_packet_skip", False)
         self.server_ip = self.config.get("ip", "127.0.0.1")
@@ -95,7 +96,8 @@ class CIPClient:
 
         while self.running:
             # Wait for TCP connection
-            self.logger(f"{self.class_name}: Waiting for TCP connection to send UDP packets.", level="DEBUG")
+            if self.debug:
+                self.logger(f"{self.class_name}: Waiting for TCP connection to send UDP packets.", level="DEBUG")
 
             while not self.tcp_connected.is_set() and self.running:
                 await asyncio.sleep(0.1)
@@ -126,7 +128,7 @@ class CIPClient:
                 elif len(message_bytes) > packet_size:
                     self.logger(f"{self.class_name}: Warning: Packet size ({len(message_bytes)}) exceeds specified limit ({packet_size}).", level="ERROR")
                     message_bytes = message_bytes[:packet_size]
-                    
+
                 # Send the packet to the server
                 self.udp_socket.sendto(message_bytes, (self.server_ip, self.udp_dstport))
                 self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', "
