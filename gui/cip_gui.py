@@ -6,7 +6,7 @@ import threading
 import queue
 import json
 from datetime import datetime
-from utils.logger import create_logger
+from utils.logger import create_threaded_logger
 import gc, socket
 
 class CIPGUI:
@@ -19,8 +19,8 @@ class CIPGUI:
         self.app_config, self.consumer_config, self.producers_config = self.load_config()
         self.hostname = socket.gethostname()
         # Initialize loggers
-        self.server_logger = create_logger(f"{self.hostname }_server", log_to_console=False)
-        self.client_logger = create_logger(f"{self.hostname }_client", log_to_console=False)
+        self.server_logger = create_threaded_logger(f"{self.hostname }_server", log_to_console=False)
+        self.client_logger = create_threaded_logger(f"{self.hostname }_client", log_to_console=False)
 
         # Initialize emulator with GUI mode
         self.emulator = CIPEmulator(
