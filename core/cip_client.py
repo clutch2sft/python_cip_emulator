@@ -160,9 +160,7 @@ class CIPClient:
                 # Send the packet with padded or truncated data
                 #self.udp_socket.sendto(message_bytes, (self.server_ip, self.udp_port))
                 self.udp_socket.sendto(message.encode(), (self.server_ip, self.udp_dstport))
-                if not self.quiet:
-                    self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes", level="INFO")
-
+                self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes", level="INFO")
                 self.sequence_number += 1
 
                 # Controlled sleep with `self.running` check

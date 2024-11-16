@@ -27,9 +27,11 @@ class CIPEmulator:
         self.filter_factor=self.consumer_config.get("latency_filter_factor") #its a bit in the wrong place but it also doesn't make sense to put it in multiple times under each client.
         self.class_name = self.__class__.__name__
         
-        # Set up the server logger or placeholder null logger
-        self.server_logger = self._create_logger_adapter(logger_server) if logger_server else self._null_logger
-        self.logger_client = logger_client or {}
+        if logger_server is None:
+            # Set up the server logger or placeholder null logger
+            self.server_logger = self._create_logger_adapter(logger_server) if logger_server else self._null_logger
+        if logger_client is None:
+            self.logger_client = logger_client or {}
         
         # Initialize TimeSyncServer if in CLI mode
         self.tsync_server = None
@@ -63,7 +65,7 @@ class CIPEmulator:
     def _create_logger_adapter(self, logger):
         """
         Wraps a logger to allow mode-specific (GUI/CLI) logging. Adjusts the logging
-        function based on whether GUI or CLI mode is used.
+        function based on whether GUI or CLI mode is used and respects the 'quiet' flag.
         """
         if self.gui_mode:
             # GUI mode: Use a callable for GUI queueing
@@ -74,8 +76,9 @@ class CIPEmulator:
             def log(message, level="INFO"):
                 if logger:
                     log_method = getattr(logger, level.lower(), logger.info)
-                    log_method(message)
+                    log_method(message, log_to_console_cancel=self.quiet)
         return log
+
 
     def _create_client_logger(self, client_tag):
         """
@@ -90,8 +93,11 @@ class CIPEmulator:
             client_logger = self.logger_client.get(client_tag)
             if client_logger is None:
                 return self._null_logger
-
-            return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(f"[{client_tag}] {message}")
+            return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(
+                message,
+                log_to_console_cancel=self.quiet
+            )
+            #return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(f"[{client_tag}] {message}")
 
     def _initialize_time_sync_server(self):
         """Initializes the TimeSyncServer for time synchronization in CLI mode."""

@@ -75,9 +75,9 @@ class ThreadedLogger:
                     formatted_message = f"[{timestamp}] [{level}] {message}\n"
                     await file.write(formatted_message)
 
-    def log_message(self, message, level="INFO"):
+    def log_message(self, message, level="INFO", log_to_console_cancel=False):
         """Queue a log message for asynchronous processing and optionally print to console."""
-        if self.log_to_console:
+        if self.log_to_console and not log_to_console_cancel:
             # Print to the console immediately
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             formatted_message = f"[{timestamp}] [{level}] {message}"
