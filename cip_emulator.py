@@ -53,7 +53,7 @@ def main():
     if not (args.no_gui or args.server_only or args.client_only or args.both):
         # Run GUI mode if no headless flags are set
         from gui.cip_gui import CIPGUI
-        emulator_logger = create_threaded_logger(f"{hostname }_emulator")
+        emulator_logger = create_threaded_logger(name=f"{hostname }_emulator")
         emulator_logger.info("Main entry function: Starting CIP Emulator in GUI mode.")
         gui = CIPGUI(config_path=CONFIG_PATH, logger_app=emulator_logger)
         gui.run()  # Start the GUI
@@ -61,13 +61,13 @@ def main():
 
     # Headless mode (CLI)
     if args.no_gui or args.server_only or args.client_only or args.both:
-        emulator_logger = create_threaded_logger(f"{hostname}_emulator")
+        emulator_logger = create_threaded_logger(name=f"{hostname}_emulator")
         emulator_logger.info("Main entry function: Starting CIP Emulator in headless mode.")
 
         # Initialize server logger if the server is needed
         server_logger = None
         if args.server_only or args.both:
-            server_logger = create_threaded_logger(f"{hostname}_server", use_ansi_colors=True)
+            server_logger = create_threaded_logger(name=f"{hostname}_server", use_ansi_colors=True)
             emulator_logger.info(f"Main entry function: Server logger initialized as {hostname}_server")
 
         # Initialize client loggers for each configured producer if clients are needed
@@ -77,7 +77,7 @@ def main():
             for tag in producers_config:
                 client_logger_name = f"{hostname}_client_{tag}"
                 emulator_logger.info(f"Main entry function: Initializing client logger for {client_logger_name}")
-                client_loggers[tag] = create_threaded_logger(client_logger_name, use_ansi_colors=True)
+                client_loggers[tag] = create_threaded_logger(name=client_logger_name, use_ansi_colors=True)
 
         # Initialize CIPEmulator with the necessary loggers and configuration
 
