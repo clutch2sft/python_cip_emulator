@@ -134,48 +134,39 @@ class CIPServer:
                     rcvd_timestamp = datetime.now()
                     tag, received_seq_num, sent_timestamp = data.decode().split(',')
                     received_seq_num = int(received_seq_num)
-                    # Convert sent timestamp to datetime
                     packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
 
-                    # Calculate flight time in milliseconds
-                    flight_time_ms = ((rcvd_timestamp) - packet_timestamp).total_seconds() * 1000
-                    #print(f"[DEBUG] Flight time calculated: {flight_time_ms} ms")
+                    # Calculate flight time
+                    flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
 
-                    # Verify positive flight time and detect outliers
+                    # Handle outlier detection and logging
                     is_outlier, mean, stdev = self._check_flight_time_outlier(flight_time_ms)
 
-                    # Track missed packets
                     last_seq_num = self.last_sequence_numbers.get(tag, 0)
                     if received_seq_num != last_seq_num + 1 and last_seq_num != 0:
                         missed_count = received_seq_num - last_seq_num - 1
-                        missed_log = (
-                            f"Missed MISSEDCNT={missed_count} packet(s) TAG='{tag}' SRC_IP_PORT={addr} "
-                            f"MISS_TIMESTAMP={packet_timestamp} LSEQNO={last_seq_num} RSEQNO={received_seq_num}"
+                        self.logger(
+                            f"Missed {missed_count} packet(s) TAG='{tag}' SRC_IP_PORT={addr} "
+                            f"LAST_SEQNO={last_seq_num} CURRENT_SEQNO={received_seq_num}", level="ERROR"
                         )
-                        self.logger(missed_log, level="ERROR")
 
-                    # Log the received packet with outlier information if applicable
-                    received_log = (
+                    log_msg = (
                         f"Received SEQNO={received_seq_num} TAG='{tag}' SRC_IP_PORT={addr} "
-                        f"SENT_TIMESTAMP={sent_timestamp} RCVD_TIMESTAMP={rcvd_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')} "
-                        f"FLIGHT_TIME={flight_time_ms:.3f} ms"
+                        f"FLIGHT_TIME={flight_time_ms:.3f}ms"
                     )
-
                     if is_outlier:
-                        received_log += f" [OUTLIER - Mean: {mean:.3f} ms, StDev: {stdev:.3f} ms]"
-                        self.logger(f"{self.class_name}: {received_log}", level="ERROR")
-                    else:
-                        self.logger(f"{self.class_name}: {received_log}", level="INFO")
+                        log_msg += f" [OUTLIER - Mean: {mean:.3f}ms, StDev: {stdev:.3f}ms]"
+                    self.logger(log_msg, level="INFO")
 
-                    # Update last sequence number for this client tag
                     self.last_sequence_numbers[tag] = received_seq_num
 
                 except socket.timeout:
                     continue
-                except OSError as e:
-                    self.logger(f"{self.class_name}: UDP server error: {e}", level="ERROR")
-                    break
+                except Exception as e:
+                    self.logger(f"{self.class_name}: Error in UDP server: {e}", level="ERROR")
+
         finally:
+            # Only close the socket when the server is stopped
             if self.udp_socket:
                 self.udp_socket.close()
                 self.logger(f"{self.class_name}: UDP server shut down.", level="INFO")
