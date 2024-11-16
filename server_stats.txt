@@ -1,58 +1,58 @@
-Sat Nov 16 05:53:42 2024    profile_results.prof
+Sat Nov 16 06:10:41 2024    profile_results.prof
 
-         61366 function calls (61276 primitive calls) in 127.364 seconds
+         5440 function calls (5324 primitive calls) in 183.954 seconds
 
    Ordered by: cumulative time
-   List reduced from 518 to 20 due to restriction <20>
+   List reduced from 491 to 20 due to restriction <20>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-      9/1    0.002    0.000  127.364  127.364 {built-in method builtins.exec}
-        1    0.000    0.000  127.364  127.364 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
-        1    0.000    0.000  127.022  127.022 /home/greggc/python_cip_emulator/gui/cip_gui.py:315(run)
-        1    0.000    0.000  127.022  127.022 /usr/lib/python3.10/tkinter/__init__.py:1456(mainloop)
-        1  121.600  121.600  127.022  127.022 {method 'mainloop' of '_tkinter.tkapp' objects}
-     2023    0.035    0.000    5.422    0.003 /usr/lib/python3.10/tkinter/__init__.py:1916(__call__)
-     1211    0.029    0.000    5.181    0.004 /usr/lib/python3.10/tkinter/__init__.py:837(callit)
-     1211    0.130    0.000    5.037    0.004 /home/greggc/python_cip_emulator/gui/cip_gui.py:270(update_log_display)
-     4552    4.845    0.001    4.845    0.001 {method 'call' of '_tkinter.tkapp' objects}
-      816    0.007    0.000    3.964    0.005 /usr/lib/python3.10/tkinter/__init__.py:3862(see)
-     1316    0.010    0.000    0.481    0.000 /usr/lib/python3.10/tkinter/__init__.py:3779(insert)
-     1212    0.029    0.000    0.321    0.000 /usr/lib/python3.10/tkinter/__init__.py:825(after)
-        1    0.000    0.000    0.313    0.313 /home/greggc/python_cip_emulator/gui/cip_gui.py:13(__init__)
-        1    0.001    0.001    0.282    0.282 /usr/lib/python3.10/tkinter/__init__.py:2279(__init__)
-        1    0.280    0.280    0.280    0.280 {built-in method _tkinter.create}
-      809    0.010    0.000    0.177    0.000 /usr/lib/python3.10/tkinter/__init__.py:3566(set)
-     1211    0.009    0.000    0.115    0.000 /usr/lib/python3.10/tkinter/__init__.py:668(deletecommand)
-     1225    0.102    0.000    0.102    0.000 {method 'deletecommand' of '_tkinter.tkapp' objects}
-     1223    0.056    0.000    0.100    0.000 /usr/lib/python3.10/tkinter/__init__.py:1542(_register)
-     1319    0.041    0.000    0.080    0.000 /usr/lib/python3.10/queue.py:154(get)
+      5/1    0.000    0.000  183.954  183.954 {built-in method builtins.exec}
+        1    0.000    0.000  183.954  183.954 <string>:1(<module>)
+        1    0.003    0.003  183.954  183.954 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
+      368  183.936    0.500  183.936    0.500 {built-in method time.sleep}
+        1    0.000    0.000    0.008    0.008 /home/greggc/python_cip_emulator/core/cip_emulator.py:9(__init__)
+        1    0.000    0.000    0.008    0.008 /home/greggc/python_cip_emulator/core/cip_emulator.py:96(_initialize_time_sync_server)
+        1    0.000    0.000    0.006    0.006 /home/greggc/python_cip_emulator/core/time/server/timesyncserver.py:64(__init__)
+      5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:1022(_find_and_load)
+      5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:987(_find_and_load_unlocked)
+      5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:664(_load_unlocked)
+        1    0.000    0.000    0.005    0.005 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/__init__.py:2181(server)
+      4/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap_external>:877(exec_module)
+      8/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:233(_call_with_frames_removed)
+     13/7    0.000    0.000    0.004    0.001 <frozen importlib._bootstrap>:1053(_handle_fromlist)
+      2/1    0.000    0.000    0.004    0.004 {built-in method builtins.__import__}
+        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1(<module>)
+        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/core/cip_emulator.py:186(stop_server)
+        7    0.000    0.000    0.002    0.000 /usr/lib/python3.10/threading.py:916(start)
+        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/core/time/server/timesyncserver.py:87(stop)
+        4    0.000    0.000    0.002    0.000 <frozen importlib._bootstrap_external>:950(get_code)
 
 
-Sat Nov 16 05:53:42 2024    profile_results.prof
+Sat Nov 16 06:10:41 2024    profile_results.prof
 
-         61366 function calls (61276 primitive calls) in 127.364 seconds
+         5440 function calls (5324 primitive calls) in 183.954 seconds
 
    Ordered by: internal time
-   List reduced from 518 to 20 due to restriction <20>
+   List reduced from 491 to 20 due to restriction <20>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-        1  121.600  121.600  127.022  127.022 {method 'mainloop' of '_tkinter.tkapp' objects}
-     4552    4.845    0.001    4.845    0.001 {method 'call' of '_tkinter.tkapp' objects}
-        1    0.280    0.280    0.280    0.280 {built-in method _tkinter.create}
-     1211    0.130    0.000    5.037    0.004 /home/greggc/python_cip_emulator/gui/cip_gui.py:270(update_log_display)
-     1225    0.102    0.000    0.102    0.000 {method 'deletecommand' of '_tkinter.tkapp' objects}
-     1223    0.056    0.000    0.100    0.000 /usr/lib/python3.10/tkinter/__init__.py:1542(_register)
-     1319    0.041    0.000    0.080    0.000 /usr/lib/python3.10/queue.py:154(get)
-     2023    0.035    0.000    5.422    0.003 /usr/lib/python3.10/tkinter/__init__.py:1916(__call__)
-     1225    0.030    0.000    0.030    0.000 {method 'createcommand' of '_tkinter.tkapp' objects}
-     1212    0.029    0.000    0.321    0.000 /usr/lib/python3.10/tkinter/__init__.py:825(after)
-     1211    0.029    0.000    5.181    0.004 /usr/lib/python3.10/tkinter/__init__.py:837(callit)
-     2530    0.025    0.000    0.041    0.000 /usr/lib/python3.10/queue.py:97(empty)
-     3849    0.011    0.000    0.017    0.000 /usr/lib/python3.10/queue.py:209(_qsize)
-     1316    0.010    0.000    0.481    0.000 /usr/lib/python3.10/tkinter/__init__.py:3779(insert)
-      809    0.010    0.000    0.177    0.000 /usr/lib/python3.10/tkinter/__init__.py:3566(set)
-     1323    0.010    0.000    0.017    0.000 /usr/lib/python3.10/threading.py:359(notify)
-     1211    0.009    0.000    0.115    0.000 /usr/lib/python3.10/tkinter/__init__.py:668(deletecommand)
-     1343    0.008    0.000    0.008    0.000 {method 'acquire' of '_thread.lock' objects}
-      816    0.007    0.000    3.964    0.005 /usr/lib/python3.10/tkinter/__init__.py:3862(see)
-     5089    0.006    0.000    0.006    0.000 {method '__exit__' of '_thread.lock' objects}
+      368  183.936    0.500  183.936    0.500 {built-in method time.sleep}
+        1    0.003    0.003  183.954  183.954 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
+       28    0.001    0.000    0.001    0.000 {method 'acquire' of '_thread.lock' objects}
+        4    0.001    0.000    0.001    0.000 {built-in method marshal.loads}
+        1    0.001    0.001    0.001    0.001 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1376(_start)
+        1    0.001    0.001    0.001    0.001 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1424(__init__)
+       12    0.001    0.000    0.001    0.000 {built-in method builtins.print}
+        1    0.001    0.001    0.001    0.001 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1342(_begin_shutdown_once)
+        7    0.001    0.000    0.001    0.000 {built-in method _thread.start_new_thread}
+       14    0.000    0.000    0.000    0.000 {method 'strftime' of 'datetime.date' objects}
+       52    0.000    0.000    0.000    0.000 {built-in method posix.stat}
+       23    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x5dbd474e59a0}
+       27    0.000    0.000    0.001    0.000 {built-in method builtins.__build_class__}
+       14    0.000    0.000    0.000    0.000 {built-in method _abc._abc_init}
+        1    0.000    0.000    0.000    0.000 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1204(_add_insecure_port)
+       14    0.000    0.000    0.000    0.000 /usr/lib/python3.10/threading.py:236(__init__)
+        2    0.000    0.000    0.000    0.000 {built-in method builtins.eval}
+        1    0.000    0.000    0.000    0.000 {built-in method _imp.create_dynamic}
+       12    0.000    0.000    0.001    0.000 /home/greggc/python_cip_emulator/utils/logger.py:78(log_message)
+        7    0.000    0.000    0.000    0.000 /usr/lib/python3.10/threading.py:827(__init__)
