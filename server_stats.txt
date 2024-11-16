@@ -1,58 +1,58 @@
-Sat Nov 16 06:10:41 2024    profile_results.prof
+Sat Nov 16 06:28:03 2024    profile_results.prof
 
-         5440 function calls (5324 primitive calls) in 183.954 seconds
+         5667 function calls (5551 primitive calls) in 297.604 seconds
 
    Ordered by: cumulative time
    List reduced from 491 to 20 due to restriction <20>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-      5/1    0.000    0.000  183.954  183.954 {built-in method builtins.exec}
-        1    0.000    0.000  183.954  183.954 <string>:1(<module>)
-        1    0.003    0.003  183.954  183.954 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
-      368  183.936    0.500  183.936    0.500 {built-in method time.sleep}
+      5/1    0.000    0.000  297.604  297.604 {built-in method builtins.exec}
+        1    0.000    0.000  297.604  297.604 <string>:1(<module>)
+        1    0.004    0.004  297.604  297.604 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
+      595  297.586    0.500  297.586    0.500 {built-in method time.sleep}
         1    0.000    0.000    0.008    0.008 /home/greggc/python_cip_emulator/core/cip_emulator.py:9(__init__)
         1    0.000    0.000    0.008    0.008 /home/greggc/python_cip_emulator/core/cip_emulator.py:96(_initialize_time_sync_server)
         1    0.000    0.000    0.006    0.006 /home/greggc/python_cip_emulator/core/time/server/timesyncserver.py:64(__init__)
       5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:1022(_find_and_load)
       5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:987(_find_and_load_unlocked)
-      5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:664(_load_unlocked)
         1    0.000    0.000    0.005    0.005 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/__init__.py:2181(server)
-      4/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap_external>:877(exec_module)
-      8/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:233(_call_with_frames_removed)
+      5/2    0.000    0.000    0.005    0.002 <frozen importlib._bootstrap>:664(_load_unlocked)
+      4/2    0.000    0.000    0.004    0.002 <frozen importlib._bootstrap_external>:877(exec_module)
+      8/2    0.000    0.000    0.004    0.002 <frozen importlib._bootstrap>:233(_call_with_frames_removed)
      13/7    0.000    0.000    0.004    0.001 <frozen importlib._bootstrap>:1053(_handle_fromlist)
       2/1    0.000    0.000    0.004    0.004 {built-in method builtins.__import__}
-        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1(<module>)
         1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/core/cip_emulator.py:186(stop_server)
+        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1(<module>)
         7    0.000    0.000    0.002    0.000 /usr/lib/python3.10/threading.py:916(start)
-        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/core/time/server/timesyncserver.py:87(stop)
         4    0.000    0.000    0.002    0.000 <frozen importlib._bootstrap_external>:950(get_code)
+        1    0.000    0.000    0.002    0.002 /home/greggc/python_cip_emulator/core/time/server/timesyncserver.py:77(start)
 
 
-Sat Nov 16 06:10:41 2024    profile_results.prof
+Sat Nov 16 06:28:03 2024    profile_results.prof
 
-         5440 function calls (5324 primitive calls) in 183.954 seconds
+         5667 function calls (5551 primitive calls) in 297.604 seconds
 
    Ordered by: internal time
    List reduced from 491 to 20 due to restriction <20>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-      368  183.936    0.500  183.936    0.500 {built-in method time.sleep}
-        1    0.003    0.003  183.954  183.954 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
-       28    0.001    0.000    0.001    0.000 {method 'acquire' of '_thread.lock' objects}
+      595  297.586    0.500  297.586    0.500 {built-in method time.sleep}
+        1    0.004    0.004  297.604  297.604 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
         4    0.001    0.000    0.001    0.000 {built-in method marshal.loads}
+       28    0.001    0.000    0.001    0.000 {method 'acquire' of '_thread.lock' objects}
         1    0.001    0.001    0.001    0.001 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1376(_start)
         1    0.001    0.001    0.001    0.001 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1424(__init__)
        12    0.001    0.000    0.001    0.000 {built-in method builtins.print}
-        1    0.001    0.001    0.001    0.001 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1342(_begin_shutdown_once)
         7    0.001    0.000    0.001    0.000 {built-in method _thread.start_new_thread}
        14    0.000    0.000    0.000    0.000 {method 'strftime' of 'datetime.date' objects}
+        1    0.000    0.000    0.000    0.000 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1342(_begin_shutdown_once)
        52    0.000    0.000    0.000    0.000 {built-in method posix.stat}
-       23    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x5dbd474e59a0}
-       27    0.000    0.000    0.001    0.000 {built-in method builtins.__build_class__}
-       14    0.000    0.000    0.000    0.000 {built-in method _abc._abc_init}
+       23    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x5a50ead4a9a0}
         1    0.000    0.000    0.000    0.000 /home/greggc/python_cip_emulator/venv/lib/python3.10/site-packages/grpc/_server.py:1204(_add_insecure_port)
-       14    0.000    0.000    0.000    0.000 /usr/lib/python3.10/threading.py:236(__init__)
-        2    0.000    0.000    0.000    0.000 {built-in method builtins.eval}
-        1    0.000    0.000    0.000    0.000 {built-in method _imp.create_dynamic}
+       27    0.000    0.000    0.001    0.000 {built-in method builtins.__build_class__}
        12    0.000    0.000    0.001    0.000 /home/greggc/python_cip_emulator/utils/logger.py:78(log_message)
+       14    0.000    0.000    0.000    0.000 /usr/lib/python3.10/threading.py:236(__init__)
         7    0.000    0.000    0.000    0.000 /usr/lib/python3.10/threading.py:827(__init__)
+        2    0.000    0.000    0.000    0.000 /usr/lib/python3.10/collections/__init__.py:328(namedtuple)
+       14    0.000    0.000    0.000    0.000 {built-in method _abc._abc_init}
+        2    0.000    0.000    0.000    0.000 {built-in method builtins.eval}
