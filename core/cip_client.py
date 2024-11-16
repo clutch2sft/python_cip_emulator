@@ -1,4 +1,5 @@
 import socket
+import struct
 import threading
 import time
 from datetime import datetime, timedelta
@@ -176,5 +177,13 @@ class CIPClient:
                 break
 
         if self.udp_socket:
-            self.udp_socket.close()
-            self.logger("UDP socket closed.", level="INFO")
+            try:
+                start_time = time.perf_counter()
+                self.logger("Closing UDP socket...", level="DEBUG")
+                # Optionally set linger for immediate closure
+                self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
+                self.udp_socket.close()
+                elapsed_time = time.perf_counter() - start_time
+                self.logger(f"UDP socket close took {elapsed_time:.4f} seconds.", level="DEBUG")
+            except OSError as e:
+                self.logger(f"Error closing UDP socket: {e}", level="ERROR")
