@@ -32,9 +32,11 @@ class CIPEmulator:
             self.server_logger = self._create_logger_adapter(logger_server) if logger_server else self._null_logger
         else:
             self.server_logger = logger_server
+
         if logger_client is None:
             self.logger_client = logger_client or {}
-        
+        else:
+            self.logger_client = logger_client
         # Initialize TimeSyncServer if in CLI mode
         self.tsync_server = None
         if not gui_mode:
