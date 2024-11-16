@@ -1,0 +1,58 @@
+Sat Nov 16 05:37:50 2024    profile_results.prof
+
+         51147 function calls (51057 primitive calls) in 110.271 seconds
+
+   Ordered by: cumulative time
+   List reduced from 486 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      9/1    0.002    0.000  110.271  110.271 {built-in method builtins.exec}
+        1    0.000    0.000  110.271  110.271 /home/greggc/python_cip_emulator/cip_emulator.py:20(main)
+        1    0.000    0.000  109.975  109.975 /home/greggc/python_cip_emulator/gui/cip_gui.py:315(run)
+        1    0.000    0.000  109.975  109.975 /usr/lib/python3.10/tkinter/__init__.py:1456(mainloop)
+        1  105.852  105.852  109.975  109.975 {method 'mainloop' of '_tkinter.tkapp' objects}
+     1686    0.032    0.000    4.123    0.002 /usr/lib/python3.10/tkinter/__init__.py:1916(__call__)
+     1055    0.025    0.000    3.912    0.004 /usr/lib/python3.10/tkinter/__init__.py:837(callit)
+     1055    0.115    0.000    3.813    0.004 /home/greggc/python_cip_emulator/gui/cip_gui.py:270(update_log_display)
+     3557    3.635    0.001    3.635    0.001 {method 'call' of '_tkinter.tkapp' objects}
+      636    0.006    0.000    3.048    0.005 /usr/lib/python3.10/tkinter/__init__.py:3862(see)
+     1019    0.008    0.000    0.300    0.000 /usr/lib/python3.10/tkinter/__init__.py:3779(insert)
+        1    0.001    0.001    0.270    0.270 /home/greggc/python_cip_emulator/gui/cip_gui.py:13(__init__)
+        1    0.001    0.001    0.243    0.243 /usr/lib/python3.10/tkinter/__init__.py:2279(__init__)
+        1    0.242    0.242    0.242    0.242 {built-in method _tkinter.create}
+     1056    0.028    0.000    0.234    0.000 /usr/lib/python3.10/tkinter/__init__.py:825(after)
+      628    0.011    0.000    0.124    0.000 /usr/lib/python3.10/tkinter/__init__.py:3566(set)
+     1067    0.053    0.000    0.082    0.000 /usr/lib/python3.10/tkinter/__init__.py:1542(_register)
+     1055    0.007    0.000    0.074    0.000 /usr/lib/python3.10/tkinter/__init__.py:668(deletecommand)
+     1022    0.036    0.000    0.068    0.000 /usr/lib/python3.10/queue.py:154(get)
+     1069    0.064    0.000    0.064    0.000 {method 'deletecommand' of '_tkinter.tkapp' objects}
+
+
+Sat Nov 16 05:37:50 2024    profile_results.prof
+
+         51147 function calls (51057 primitive calls) in 110.271 seconds
+
+   Ordered by: internal time
+   List reduced from 486 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1  105.852  105.852  109.975  109.975 {method 'mainloop' of '_tkinter.tkapp' objects}
+     3557    3.635    0.001    3.635    0.001 {method 'call' of '_tkinter.tkapp' objects}
+        1    0.242    0.242    0.242    0.242 {built-in method _tkinter.create}
+     1055    0.115    0.000    3.813    0.004 /home/greggc/python_cip_emulator/gui/cip_gui.py:270(update_log_display)
+     1069    0.064    0.000    0.064    0.000 {method 'deletecommand' of '_tkinter.tkapp' objects}
+     1067    0.053    0.000    0.082    0.000 /usr/lib/python3.10/tkinter/__init__.py:1542(_register)
+     1022    0.036    0.000    0.068    0.000 /usr/lib/python3.10/queue.py:154(get)
+     1686    0.032    0.000    4.123    0.002 /usr/lib/python3.10/tkinter/__init__.py:1916(__call__)
+     1056    0.028    0.000    0.234    0.000 /usr/lib/python3.10/tkinter/__init__.py:825(after)
+     1055    0.025    0.000    3.912    0.004 /usr/lib/python3.10/tkinter/__init__.py:837(callit)
+     2077    0.021    0.000    0.036    0.000 /usr/lib/python3.10/queue.py:97(empty)
+     1069    0.015    0.000    0.015    0.000 {method 'createcommand' of '_tkinter.tkapp' objects}
+     1053    0.013    0.000    0.013    0.000 {method 'acquire' of '_thread.lock' objects}
+      628    0.011    0.000    0.124    0.000 /usr/lib/python3.10/tkinter/__init__.py:3566(set)
+     3099    0.010    0.000    0.015    0.000 /usr/lib/python3.10/queue.py:209(_qsize)
+     1019    0.008    0.000    0.300    0.000 /usr/lib/python3.10/tkinter/__init__.py:3779(insert)
+     1033    0.008    0.000    0.015    0.000 /usr/lib/python3.10/threading.py:359(notify)
+     1055    0.007    0.000    0.074    0.000 /usr/lib/python3.10/tkinter/__init__.py:668(deletecommand)
+     1067    0.006    0.000    0.006    0.000 /usr/lib/python3.10/tkinter/__init__.py:1910(__init__)
+      636    0.006    0.000    3.048    0.005 /usr/lib/python3.10/tkinter/__init__.py:3862(see)
