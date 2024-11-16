@@ -116,16 +116,17 @@ class CIPClient:
                     self.logger(f"Adjusted timestamp for sequence {self.sequence_number} to create an outlier.", level="INFO")
 
                 timestamp_str = adjusted_time.strftime("%Y-%m-%d %H:%M:%S.%f")
-                message = f"{self.class_name}: {self.tag},{self.sequence_number},{timestamp_str}"
+                message = f"{self.class_name}: {self.tag},{self.sequence_number},{timestamp_str}".strip()
                 message_bytes = message.encode()
 
                 # Pad or truncate the message to fit the desired packet size
                 if len(message_bytes) < packet_size:
-                    message_bytes += b' ' * (packet_size - len(message_bytes))
+                    padding = b' ' * (packet_size - len(message_bytes))
+                    message_bytes += padding
                 elif len(message_bytes) > packet_size:
-                    self.logger(f"Warning: Packet size ({len(message_bytes)}) exceeds specified limit ({packet_size}).", level="ERROR")
+                    self.logger(f"{self.class_name}: Warning: Packet size ({len(message_bytes)}) exceeds specified limit ({packet_size}).", level="ERROR")
                     message_bytes = message_bytes[:packet_size]
-
+                    
                 # Send the packet to the server
                 self.udp_socket.sendto(message_bytes, (self.server_ip, self.udp_dstport))
                 self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', "

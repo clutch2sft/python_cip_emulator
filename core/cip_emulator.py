@@ -136,7 +136,7 @@ class CIPEmulator:
     def _wait_for_stability(self):
         """Waits for TimeSyncClient to reach stability with a timeout."""
         start_time = time.time()
-        max_wait_time = 10
+        max_wait_time = 20
         last_log_time = start_time
         
         while not self.tsync_client.is_stable():
