@@ -4,6 +4,7 @@ from core.time.server.timesyncserver import TimeSyncServer
 from core.time.client.timesyncclient import TimeSyncClient
 import time
 import atexit
+import asyncio
 
 class CIPEmulator:
     def __init__(self, app_config, consumer_config, producers_config, logger_server=None, logger_client=None, logger_app=None, gui_mode=False, quiet=False):
@@ -164,17 +165,26 @@ class CIPEmulator:
         """Starts all configured CIPClient instances (producers) and initializes TimeSyncClient in CLI mode."""
         stability_reached = self._initialize_time_sync_client()
         if stability_reached:
-            for producer in self.producers:
-                producer.start()  # Start each producer client in CLI mode
+            # Ensure all producers start asynchronously
+            loop = asyncio.get_event_loop()
+            tasks = [producer.start() for producer in self.producers]
+            loop.run_until_complete(asyncio.gather(*tasks))
 
     def stop_all_clients(self):
         """Stops all configured CIPClient instances (producers) and shuts down TimeSyncClient."""
-        for producer in self.producers:
-            producer.stop()
+        async def stop_clients():
+            # Stop all producers asynchronously
+            producer_stop_tasks = [producer.stop() for producer in self.producers]
+            if producer_stop_tasks:
+                await asyncio.gather(*producer_stop_tasks)
 
-        if self.tsync_client:
-            self.tsync_client.stop()
-            self.tsync_client = None
+            # Stop TimeSyncClient if it exists
+            if self.tsync_client:
+                await self.tsync_client.stop()
+                self.tsync_client = None
+
+        # Run the asynchronous stop process
+        asyncio.run(stop_clients())
 
     def stop_gui_clients(self):
         """Stops clients in GUI mode."""
