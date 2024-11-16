@@ -5,6 +5,7 @@ from collections import deque
 import threading
 import aiofiles
 import inspect  # For retrieving the caller's line number
+from threading import Lock
 
 # ANSI escape codes for colored terminal output (for Unix-based systems)
 COLORS = {
@@ -15,7 +16,7 @@ COLORS = {
 }
 
 class ThreadedLogger:
-    def __init__(self, name="default", log_to_file=True, log_to_console=True, use_ansi_colors=False, log_directory="./logs", batch_size=10, flush_interval=0.5):
+    def __init__(self, name="default", log_to_file=True, log_to_console=True, use_ansi_colors=False, log_directory="./logs", batch_size=75, flush_interval=1):
         self.name = name
         self.log_to_file = log_to_file
         self.log_to_console = log_to_console
@@ -26,7 +27,7 @@ class ThreadedLogger:
         self.log_file_path = None
 
         self.log_queue = deque()
-        self.stop_event = threading.Event()
+        self.queue_lock = Lock()
 
         # Start the asyncio event loop in a separate thread
         self.loop = asyncio.new_event_loop()
@@ -49,9 +50,18 @@ class ThreadedLogger:
     async def _process_queue(self):
         buffer = []
         last_flush_time = asyncio.get_event_loop().time()
+        condition = asyncio.Condition()
+
+        async def wait_for_messages():
+            async with condition:
+                await condition.wait()
 
         while not self.stop_event.is_set():
-            # Check for new log messages
+            # Wait for new log messages or flush timeout
+            if not self.log_queue:
+                await asyncio.wait_for(wait_for_messages(), timeout=self.flush_interval)
+
+            # Process messages from the queue
             while self.log_queue:
                 buffer.append(self.log_queue.popleft())
                 if len(buffer) >= self.batch_size:
@@ -59,38 +69,36 @@ class ThreadedLogger:
                     buffer.clear()
                     last_flush_time = asyncio.get_event_loop().time()
 
-            # Flush the buffer if the timeout has elapsed
+            # Flush buffer if timeout has elapsed
             if buffer and asyncio.get_event_loop().time() - last_flush_time >= self.flush_interval:
                 await self._flush_buffer(buffer)
                 buffer.clear()
                 last_flush_time = asyncio.get_event_loop().time()
 
-            await asyncio.sleep(0.01)  # Prevent busy looping
-
     async def _flush_buffer(self, buffer):
         """Asynchronously write a batch of log messages to the file."""
         if self.log_to_file and self.log_file_path:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             async with aiofiles.open(self.log_file_path, "a") as file:
-                for message, level, lineno in buffer:
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    formatted_message = f"[{timestamp}] [Line: {lineno}] [{level}] {message}\n"
-                    await file.write(formatted_message)
+                log_lines = [
+                    f"[{timestamp}] [Line: {lineno}] [{level}] {message}\n"
+                    for message, level, lineno in buffer
+                ]
+                await file.write("".join(log_lines))
 
     def log_message(self, message, level="INFO", log_to_console_cancel=False):
         """Queue a log message for asynchronous processing and optionally print to console."""
-        # Get the caller's line number
         lineno = inspect.currentframe().f_back.f_back.f_lineno
 
         if self.log_to_console and not log_to_console_cancel:
-            # Print to the console immediately
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             formatted_message = f"[{timestamp}] [Line: {lineno}] [{level}] {message}"
             color = COLORS.get(level, "") if self.use_ansi_colors else ""
             reset = COLORS["RESET"] if self.use_ansi_colors else ""
             print(f"{color}{formatted_message}{reset}")
 
-        # Queue the message for file logging
-        self.log_queue.append((message, level, lineno))
+        with self.queue_lock:
+            self.log_queue.append((message, level, lineno))
 
     def info(self, message, log_to_console_cancel=False):
         self.log_message(message, level="INFO", log_to_console_cancel=log_to_console_cancel)
