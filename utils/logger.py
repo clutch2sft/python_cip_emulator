@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import deque
 import threading
 import aiofiles
-import inspect  # For retrieving the caller's line number
+import inspect
 from threading import Lock
 
 # ANSI escape codes for colored terminal output (for Unix-based systems)
@@ -28,6 +28,10 @@ class ThreadedLogger:
 
         self.log_queue = deque()
         self.queue_lock = Lock()
+        self.stop_event = threading.Event()
+
+        # Async condition for message notification
+        self.condition = asyncio.Condition()
 
         # Start the asyncio event loop in a separate thread
         self.loop = asyncio.new_event_loop()
@@ -50,20 +54,19 @@ class ThreadedLogger:
     async def _process_queue(self):
         buffer = []
         last_flush_time = asyncio.get_event_loop().time()
-        condition = asyncio.Condition()
-
-        async def wait_for_messages():
-            async with condition:
-                await condition.wait()
 
         while not self.stop_event.is_set():
-            # Wait for new log messages or flush timeout
-            if not self.log_queue:
-                await asyncio.wait_for(wait_for_messages(), timeout=self.flush_interval)
+            try:
+                # Wait for new log messages or flush timeout
+                async with self.condition:
+                    await asyncio.wait_for(self.condition.wait(), timeout=self.flush_interval)
+            except asyncio.TimeoutError:
+                pass  # Timeout is expected; continue to flush if needed
 
             # Process messages from the queue
             while self.log_queue:
-                buffer.append(self.log_queue.popleft())
+                with self.queue_lock:
+                    buffer.append(self.log_queue.popleft())
                 if len(buffer) >= self.batch_size:
                     await self._flush_buffer(buffer)
                     buffer.clear()
@@ -78,8 +81,8 @@ class ThreadedLogger:
     async def _flush_buffer(self, buffer):
         """Asynchronously write a batch of log messages to the file."""
         if self.log_to_file and self.log_file_path:
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             async with aiofiles.open(self.log_file_path, "a") as file:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 log_lines = [
                     f"[{timestamp}] [Line: {lineno}] [{level}] {message}\n"
                     for message, level, lineno in buffer
@@ -97,8 +100,17 @@ class ThreadedLogger:
             reset = COLORS["RESET"] if self.use_ansi_colors else ""
             print(f"{color}{formatted_message}{reset}")
 
+        # Append message to the queue
         with self.queue_lock:
             self.log_queue.append((message, level, lineno))
+
+        # Notify the condition
+        if self.loop.is_running():
+            asyncio.run_coroutine_threadsafe(self._notify_condition(), self.loop)
+
+    async def _notify_condition(self):
+        async with self.condition:
+            self.condition.notify_all()
 
     def info(self, message, log_to_console_cancel=False):
         self.log_message(message, level="INFO", log_to_console_cancel=log_to_console_cancel)
@@ -108,7 +120,7 @@ class ThreadedLogger:
 
     def error(self, message, log_to_console_cancel=False):
         self.log_message(message, level="ERROR", log_to_console_cancel=log_to_console_cancel)
-        
+
     def close(self):
         """Stop the logger and ensure all pending messages are flushed."""
         self.stop_event.set()
