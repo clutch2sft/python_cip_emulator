@@ -18,10 +18,14 @@ class CIPServer:
 
     def start(self):
         """Start the TCP and UDP server."""
-        self.running = True
-        self.logger("CIP Server is starting...", level="INFO")
-        threading.Thread(target=self.handle_tcp_connection, daemon=True).start()
-        threading.Thread(target=self.handle_udp_io, daemon=True).start()
+        try:
+            self.running = True
+            self.logger("CIP Server is starting...", level="INFO")
+            threading.Thread(target=self.handle_tcp_connection, daemon=True).start()
+            threading.Thread(target=self.handle_udp_io, daemon=True).start()
+        except Exception as e:
+            self.logger(f"{self.class_name}: An error occurred while starting the server: {e}", level="ERROR")
+
 
     def stop(self):
         """Stop the TCP and UDP server."""
