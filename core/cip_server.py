@@ -13,6 +13,8 @@ class CIPServer:
         self.last_sequence_numbers = {}
         self.flight_times = []  # Store recent flight times for standard deviation calculation
         self.max_flight_time_samples = 500  # Maximum number of flight times to store
+        self.class_name = self.__class__.__name__
+
 
     def start(self):
         """Start the TCP and UDP server."""
@@ -36,41 +38,41 @@ class CIPServer:
         """Handle the TCP CIP Connection Management server."""
         conn = None
         try:
-            self.logger("Initializing TCP socket...", level="INFO")
+            self.logger(f"{self.class_name}: Initializing TCP socket...", level="INFO")
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.tcp_socket.bind(("", self.consumer_config.get("tcp_port", 1502)))
             self.tcp_socket.listen(1)
             self.tcp_socket.settimeout(0.5)
-            self.logger(f"TCP server is listening on port {self.consumer_config.get('tcp_port', 1502)}.", level="INFO")
+            self.logger(f"{self.class_name}: TCP server is listening on port {self.consumer_config.get('tcp_port', 1502)}.", level="INFO")
 
             while self.running:
                 try:
                     conn, addr = self.tcp_socket.accept()
                     conn.settimeout(0.5)
-                    self.logger(f"TCP connection established with {addr}.", level="INFO")
+                    self.logger(f"{self.class_name}: TCP connection established with {addr}.", level="INFO")
 
                     while self.running:
                         try:
                             data = conn.recv(1024).decode()
                             if data == "DISCONNECT":
-                                self.logger(f"Client {addr} requested disconnect.", level="INFO")
+                                self.logger(f"{self.class_name}: Client {addr} requested disconnect.", level="INFO")
                                 break
                             elif data:
-                                self.logger(f"Received keepalive from client: {data}", level="INFO")
+                                self.logger(f"{self.class_name}: eceived keepalive from client: {data}", level="INFO")
                         except socket.timeout:
                             continue
                 except socket.timeout:
                     continue
                 except OSError as e:
-                    self.logger(f"TCP connection error: {e}", level="ERROR")
+                    self.logger(f"{self.class_name}: TCP connection error: {e}", level="ERROR")
                     break
         finally:
             if conn:
                 conn.close()
             if self.tcp_socket:
                 self.tcp_socket.close()
-                self.logger("TCP server shut down.", level="INFO")
+                self.logger(f"{self.class_name}: TCP server shut down.", level="INFO")
 
 
 
@@ -114,12 +116,12 @@ class CIPServer:
     def handle_udp_io(self):
         """Handle the UDP I/O server."""
         try:
-            self.logger("Initializing UDP socket...", level="INFO")
+            self.logger(f"{self.class_name}: Initializing UDP socket...", level="INFO")
             self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.udp_socket.bind(("", self.consumer_config.get("udp_port", 2222)))
             self.udp_socket.settimeout(0.5)
-            self.logger(f"UDP server is listening on port {self.consumer_config.get('udp_port', 2222)}.", level="INFO")
+            self.logger(f"{self.class_name}: UDP server is listening on port {self.consumer_config.get('udp_port', 2222)}.", level="INFO")
 
             while self.running:
                 try:
@@ -157,9 +159,9 @@ class CIPServer:
 
                     if is_outlier:
                         received_log += f" [OUTLIER - Mean: {mean:.3f} ms, StDev: {stdev:.3f} ms]"
-                        self.logger(received_log, level="ERROR")
+                        self.logger(f"{self.class_name}: {received_log}", level="ERROR")
                     else:
-                        self.logger(received_log, level="INFO")
+                        self.logger(f"{self.class_name}: {received_log}", level="INFO")
 
                     # Update last sequence number for this client tag
                     self.last_sequence_numbers[tag] = received_seq_num
@@ -167,9 +169,9 @@ class CIPServer:
                 except socket.timeout:
                     continue
                 except OSError as e:
-                    self.logger(f"UDP server error: {e}", level="ERROR")
+                    self.logger(f"{self.class_name}: UDP server error: {e}", level="ERROR")
                     break
         finally:
             if self.udp_socket:
                 self.udp_socket.close()
-                self.logger("UDP server shut down.", level="INFO")
+                self.logger(f"{self.class_name}: UDP server shut down.", level="INFO")

@@ -19,13 +19,14 @@ class CIPClient:
         self.udp_socket = None
         self.sequence_number = 1
         self.running = False
+        self.class_name = self.__class__.__name__
         self.tcp_connected = threading.Event()
         self.quiet = quiet
         self.drift_corrector = DriftCorrectorBorg(network_latency_ns=30000000, logger_app=logger_app)
         # Retrieve QoS (DSCP value) from config, defaulting to 0 if not provided
         self.qos = self.config.get("qos", 0)
         if not (0 <= self.qos <= 63):
-            self.logger(f"Invalid DSCP value {self.qos} provided. Setting to 0.", level="WARNING")
+            self.logger(f"{self.class_name}: Invalid DSCP value {self.qos} provided. Setting to 0.", level="WARNING")
             self.qos = 0
 
     def start(self):
@@ -34,37 +35,38 @@ class CIPClient:
         self.running = True
         threading.Thread(target=self.send_tcp_keepalive, daemon=True).start()
         threading.Thread(target=self.send_udp_packets, daemon=True).start()
-        self.logger(f"CIP Client started with sequence number reset to 1.", level="INFO")
+        self.logger(f"{self.class_name}: CIP Client started with sequence number reset to 1.", level="INFO")
 
     def stop(self):
         """Stop the client and close connections gracefully."""
-        self.logger(f"This cip client is shutting down {self.tag} avg clock drift is currently: {self.drift_corrector.get_drift}", level="NOTICE")
+        self.logger(f"{self.class_name}: This cip client is shutting down {self.tag} avg clock drift is currently: {self.drift_corrector.get_drift}", level="NOTICE")
         self.running = False
         self.tcp_connected.clear()
 
         if self.tcp_socket:
             try:
                 self.tcp_socket.sendall("DISCONNECT".encode())
-                self.logger("Sent disconnect message to server.", level="INFO")
+                self.logger(f"{self.class_name}: Sent disconnect message to server.", level="INFO")
                 self.tcp_socket.shutdown(socket.SHUT_RDWR)
                 self.tcp_socket.close()
-                self.logger("TCP connection closed gracefully.", level="INFO")
+                self.logger(f"{self.class_name}: TCP connection closed gracefully.", level="INFO")
             except OSError as e:
-                self.logger(f"Error closing TCP socket: {e}", level="ERROR")
+                self.logger(f"{self.class_name}: Error closing TCP socket: {e}", level="ERROR")
 
         if self.udp_socket:
             self.udp_socket.close()
-            self.logger("UDP connection closed gracefully.", level="INFO")
+            self.logger(f"{self.class_name}: UDP connection closed gracefully.", level="INFO")
 
-        self.logger("CIP Client stopped.", level="INFO")
+        self.logger(f"{self.class_name}: CIP Client stopped.", level="INFO")
 
     def send_tcp_keepalive(self):
         """Manage the TCP connection and send periodic keepalive messages."""
+        self.logger(f"{self.class_name}: Connect to TCP CIP CM Server on address {self.server_ip}:{self.tcp_port} .", level="INFO")
         while self.running:
             try:
                 self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.tcp_socket.connect((self.server_ip, self.tcp_port))
-                self.logger("Connected to TCP CIP CM Server.", level="INFO")
+                self.logger(f"{self.class_name}: Connected to TCP CIP CM Server.", level="INFO")
 
                 self.tcp_connected.set()
 
@@ -79,7 +81,7 @@ class CIPClient:
                     try:
                         data = self.tcp_socket.recv(1024).decode()
                         if data:
-                            self.logger(f"Received keepalive from server: {data}", level="INFO")
+                            self.logger(f"{self.class_name}: Received keepalive from server: {data}", level="INFO")
                     except OSError:
                         if not self.running:
                             break
@@ -87,7 +89,7 @@ class CIPClient:
                     time.sleep(keepalive_interval)
 
             except (ConnectionRefusedError, ConnectionResetError, OSError) as e:
-                self.logger(f"TCP connection error: {e}. Attempting to reconnect...", level="ERROR")
+                self.logger(f"{self.class_name}: TCP connection error: {e}. Attempting to reconnect...", level="ERROR")
                 self.tcp_connected.clear()
 
                 if self.tcp_socket:
@@ -95,7 +97,7 @@ class CIPClient:
                         self.tcp_socket.shutdown(socket.SHUT_RDWR)
                         self.tcp_socket.close()
                     except OSError as e:
-                        self.logger(f"Error shutting down TCP socket during reconnect: {e}", level="ERROR")
+                        self.logger(f"{self.class_name}: Error shutting down TCP socket during reconnect: {e}", level="ERROR")
                 time.sleep(2)
 
     def send_udp_packets(self):
@@ -106,7 +108,7 @@ class CIPClient:
         tos_value = (self.qos << 2) & 0xFF
         self.udp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, tos_value)
 
-        self.logger(f"UDP socket created with DSCP value {self.qos} (0x{tos_value:X}).", level="INFO")
+        self.logger(f"{self.class_name}: UDP socket created with DSCP value {self.qos} (0x{tos_value:X}).", level="INFO")
         
         # Retrieve desired packet size from config, default to 84 bytes if not specified
         packet_size = self.config.get("packet_size", 84)
@@ -122,7 +124,7 @@ class CIPClient:
             try:
                 # Optionally skip packets based on `enable_packet_skip`
                 if self.enable_packet_skip and self.sequence_number % 10 == 0:
-                    self.logger(f"Skipped UDP packet with sequence {self.sequence_number}", level="INFO")
+                    self.logger(f"{self.class_name}: Skipped UDP packet with sequence {self.sequence_number}", level="INFO")
                     self.sequence_number += 1
                     continue
 
@@ -141,12 +143,12 @@ class CIPClient:
                     print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {adjusted_time}")
                     adjusted_time -= timedelta(seconds=2)  # Subtract 2 seconds to create an outlier
                     print(f"[DEBUG] Adjusted timestamp for sequence {self.sequence_number}: {adjusted_time}")
-                    self.logger(f"Adjusted timestamp for sequence {self.sequence_number} to create an outlier", level="INFO")
+                    self.logger(f"{self.class_name}: Adjusted timestamp for sequence {self.sequence_number} to create an outlier", level="INFO")
                 
                 # Format the timestamp as a string after adjustment, if any
                 timestamp_str = adjusted_time.strftime("%Y-%m-%d %H:%M:%S.%f")
                 # Construct message and apply padding if needed
-                message = f"{self.tag},{self.sequence_number},{timestamp_str}"
+                message = f"{self.class_name}: {self.tag},{self.sequence_number},{timestamp_str}"
                 message_bytes = message.encode()
 
                 # Pad or truncate the message to fit the desired packet size
@@ -154,13 +156,13 @@ class CIPClient:
                     padding = b' ' * (packet_size - len(message_bytes))
                     message_bytes += padding
                 elif len(message_bytes) > packet_size:
-                    self.logger(f"Warning: Packet size ({len(message_bytes)}) exceeds specified limit ({packet_size}).", level="ERROR")
+                    self.logger(f"{self.class_name}: Warning: Packet size ({len(message_bytes)}) exceeds specified limit ({packet_size}).", level="ERROR")
                     message_bytes = message_bytes[:packet_size]
 
                 # Send the packet with padded or truncated data
                 #self.udp_socket.sendto(message_bytes, (self.server_ip, self.udp_port))
                 self.udp_socket.sendto(message.encode(), (self.server_ip, self.udp_dstport))
-                self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes", level="INFO")
+                self.logger(f"{self.class_name}: Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes", level="INFO")
                 self.sequence_number += 1
 
                 # Controlled sleep with `self.running` check
@@ -171,17 +173,17 @@ class CIPClient:
                     elapsed += 0.1
 
             except OSError as e:
-                self.logger(f"Error in UDP client: {e}", level="ERROR")
+                self.logger(f"{self.class_name}: Error in UDP client: {e}", level="ERROR")
                 break
 
         if self.udp_socket:
             try:
                 start_time = time.perf_counter()
-                self.logger("Closing UDP socket...", level="DEBUG")
+                self.logger(f"{self.class_name}: Closing UDP socket...", level="DEBUG")
                 # Optionally set linger for immediate closure
                 self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
                 self.udp_socket.close()
                 elapsed_time = time.perf_counter() - start_time
-                self.logger(f"UDP socket close took {elapsed_time:.4f} seconds.", level="DEBUG")
+                self.logger(f"{self.class_name}: UDP socket close took {elapsed_time:.4f} seconds.", level="DEBUG")
             except OSError as e:
-                self.logger(f"Error closing UDP socket: {e}", level="ERROR")
+                self.logger(f"{self.class_name}: Error closing UDP socket: {e}", level="ERROR")

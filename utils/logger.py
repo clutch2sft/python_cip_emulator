@@ -4,6 +4,7 @@ from datetime import datetime
 from collections import deque
 import threading
 import aiofiles
+import inspect  # For retrieving the caller's line number
 
 # ANSI escape codes for colored terminal output (for Unix-based systems)
 COLORS = {
@@ -70,33 +71,36 @@ class ThreadedLogger:
         """Asynchronously write a batch of log messages to the file."""
         if self.log_to_file and self.log_file_path:
             async with aiofiles.open(self.log_file_path, "a") as file:
-                for message, level in buffer:
+                for message, level, lineno in buffer:
                     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    formatted_message = f"[{timestamp}] [{level}] {message}\n"
+                    formatted_message = f"[{timestamp}] [Line: {lineno}] [{level}] {message}\n"
                     await file.write(formatted_message)
 
     def log_message(self, message, level="INFO", log_to_console_cancel=False):
         """Queue a log message for asynchronous processing and optionally print to console."""
+        # Get the caller's line number
+        lineno = inspect.currentframe().f_back.f_back.f_lineno
+
         if self.log_to_console and not log_to_console_cancel:
             # Print to the console immediately
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            formatted_message = f"[{timestamp}] [{level}] {message}"
+            formatted_message = f"[{timestamp}] [Line: {lineno}] [{level}] {message}"
             color = COLORS.get(level, "") if self.use_ansi_colors else ""
             reset = COLORS["RESET"] if self.use_ansi_colors else ""
             print(f"{color}{formatted_message}{reset}")
 
         # Queue the message for file logging
-        self.log_queue.append((message, level))
+        self.log_queue.append((message, level, lineno))
 
-    def info(self, message):
-        self.log_message(message, level="INFO")
+    def info(self, message, log_to_console_cancel=False):
+        self.log_message(message, level="INFO", log_to_console_cancel=log_to_console_cancel)
 
-    def warning(self, message):
-        self.log_message(message, level="WARNING")
+    def warning(self, message, log_to_console_cancel=False):
+        self.log_message(message, level="WARNING", log_to_console_cancel=log_to_console_cancel)
 
-    def error(self, message):
-        self.log_message(message, level="ERROR")
-
+    def error(self, message, log_to_console_cancel=False):
+        self.log_message(message, level="ERROR", log_to_console_cancel=log_to_console_cancel)
+        
     def close(self):
         """Stop the logger and ensure all pending messages are flushed."""
         self.stop_event.set()
