@@ -1,6 +1,8 @@
 # CIP Emulator
 
-#depends: pip install grpcio grpcio-tools
+#depends: 
+pip install grpcio grpcio-tools
+pip install aiofiles
 
 
 ## Overview

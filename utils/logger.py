@@ -5,10 +5,19 @@ from collections import deque
 import threading
 import aiofiles
 
+# ANSI escape codes for colored terminal output (for Unix-based systems)
+COLORS = {
+    "INFO": "\033[94m",       # Blue
+    "WARNING": "\033[93m",    # Yellow
+    "ERROR": "\033[91m",      # Red
+    "RESET": "\033[0m"        # Reset color
+}
+
 class ThreadedLogger:
-    def __init__(self, name="default", log_to_file=True, log_directory="./logs", batch_size=10, flush_interval=0.5):
+    def __init__(self, name="default", log_to_file=True, log_to_console=True, log_directory="./logs", batch_size=10, flush_interval=0.5):
         self.name = name
         self.log_to_file = log_to_file
+        self.log_to_console = log_to_console
         self.log_directory = log_directory
         self.batch_size = batch_size
         self.flush_interval = flush_interval
@@ -66,7 +75,16 @@ class ThreadedLogger:
                     await file.write(formatted_message)
 
     def log_message(self, message, level="INFO"):
-        """Queue a log message for asynchronous processing."""
+        """Queue a log message for asynchronous processing and optionally print to console."""
+        if self.log_to_console:
+            # Print to the console immediately
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            formatted_message = f"[{timestamp}] [{level}] {message}"
+            color = COLORS.get(level, "") if os.name != "nt" else ""  # ANSI colors for non-Windows systems
+            reset = COLORS["RESET"] if os.name != "nt" else ""
+            print(f"{color}{formatted_message}{reset}")
+
+        # Queue the message for file logging
         self.log_queue.append((message, level))
 
     def info(self, message):
@@ -85,3 +103,39 @@ class ThreadedLogger:
         self.thread.join()
         if self.log_queue:
             asyncio.run(self._flush_buffer(list(self.log_queue)))
+
+
+def create_threaded_logger(
+    name,
+    log_directory="./logs",
+    log_to_console=True,
+    log_to_file=True,
+    batch_size=10,
+    flush_interval=0.5
+):
+    """
+    Factory method to create and configure a ThreadedLogger.
+
+    Args:
+        name (str): The name of the logger.
+        log_directory (str): The directory where log files will be stored.
+        log_to_console (bool): Whether to log to the console.
+        log_to_file (bool): Whether to log to a file.
+        batch_size (int): Number of messages to batch before flushing to the file.
+        flush_interval (float): Maximum time in seconds before flushing a batch.
+
+    Returns:
+        ThreadedLogger: Configured logger instance.
+    """
+    # Ensure the log directory exists
+    os.makedirs(log_directory, exist_ok=True)
+
+    # Create and return a ThreadedLogger instance
+    return ThreadedLogger(
+        name=name,
+        log_to_file=log_to_file,
+        log_to_console=log_to_console,
+        log_directory=log_directory,
+        batch_size=batch_size,
+        flush_interval=flush_interval,
+    )
