@@ -129,12 +129,30 @@ class CIPServer:
 
             while self.running:
                 try:
+
                     # Receive data and capture timestamps
                     data, addr = self.udp_socket.recvfrom(self.consumer_config.get("buffer_size", 2048))
                     rcvd_timestamp = datetime.now()
-                    tag, received_seq_num, sent_timestamp = data.decode().split(',')
+                    
+                    # Strip any extraneous whitespace or carriage return characters
+                    raw_data = data.decode().strip()
+                    self.logger(f"Raw data received: {raw_data}", level="DEBUG")
+
+                    # Split the data into its components
+                    tag, received_seq_num, sent_timestamp = raw_data.split(',')
                     received_seq_num = int(received_seq_num)
+
+                    # Strip the timestamp field to handle any trailing whitespace or carriage return
+                    sent_timestamp = sent_timestamp.strip()
+
+                    # Parse the timestamp
                     packet_timestamp = datetime.strptime(sent_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+
+                    # Calculate flight time in milliseconds
+                    flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
+
+                    # Log or process the received data as needed...
+                    self.logger(f"Processed packet from {addr}: SEQNO={received_seq_num}, TAG={tag}, FLIGHT_TIME={flight_time_ms:.3f} ms", level="INFO")
 
                     # Calculate flight time
                     flight_time_ms = (rcvd_timestamp - packet_timestamp).total_seconds() * 1000
@@ -161,9 +179,13 @@ class CIPServer:
                     self.last_sequence_numbers[tag] = received_seq_num
 
                 except socket.timeout:
+                    # Handle timeout silently or log at a debug level if needed
+                    #self.logger(f"{self.class_name}: UDP server timeout while waiting for packets.", level="DEBUG")
                     continue
+                except ValueError as e:
+                    self.logger(f"{self.class_name}: Error parsing UDP packet: {e}. Raw data: {data.decode()}", level="ERROR")
                 except Exception as e:
-                    self.logger(f"{self.class_name}: Error in UDP server: {e}", level="ERROR")
+                    self.logger(f"{self.class_name}:Unexpected error in UDP server: {e}", level="ERROR")
 
         finally:
             # Only close the socket when the server is stopped
