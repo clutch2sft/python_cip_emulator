@@ -198,7 +198,15 @@ class CIPEmulator:
 
         if self.server:
             try:
-                self.server.start()
+                # Ensure the server is started within an asyncio event loop
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # If the loop is already running (e.g., in a GUI application), create a task
+                    asyncio.create_task(self.server.start())
+                else:
+                    # Otherwise, run the server coroutine until it completes
+                    loop.run_until_complete(self.server.start())
+
                 self.logger_app.info(f"{self.class_name}: Server started successfully.")
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to start server: {e}")
