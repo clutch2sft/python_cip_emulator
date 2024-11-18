@@ -49,7 +49,7 @@ class CIPEmulator:
         # Adapt logger to a callable interface
         def wrapped_logger(message, level="INFO"):
             log_method = getattr(logger, level.lower(), logger.info)
-            log_method(message)
+            log_method(message, log_to_console_cancel=self.quiet)
         return wrapped_logger
 
     def _create_client_logger(self, client_tag):
