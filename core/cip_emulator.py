@@ -1,6 +1,5 @@
 import asyncio
 import time
-import atexit
 from core.cip_server import CIPServer
 from core.cip_client import CIPClient
 from core.time.server.timesyncserver import TimeSyncServer
@@ -22,9 +21,9 @@ class CIPEmulator:
         self.loop = asyncio.get_event_loop()
 
         # Logging setup
-        self.server_logger = self._wrap_logger(logger_server)
+        self.server_logger = self._wrap_logger(logger_server) if logger_server else self._null_logger
         #self.client_loggers = {tag: self._wrap_logger(logger) for tag, logger in (logger_client or {}).items()}
-        
+        self.client_loggers = logger_client or {}
         # Time sync server and client
         self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if not gui_mode else None
         self.tsync_client = None
