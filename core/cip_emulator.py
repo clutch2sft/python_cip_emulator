@@ -57,8 +57,9 @@ class CIPEmulator:
         Create or retrieve a logger for the client, appending the tag to messages.
         """
         client_logger = self.client_loggers.get(client_tag, self._null_logger)
-        return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(
-            f"[{client_tag}] {message}"
+        return lambda message, level="INFO": getattr(client_logger, level.lower(), 
+            client_logger.info)(
+            f"[{client_tag}] {message}", log_to_console_cancel=self.quiet
         )
 
     def _null_logger(self, message, level="INFO"):
