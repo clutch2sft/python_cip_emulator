@@ -90,12 +90,17 @@ class ThreadedLogger:
                 await file.write("".join(log_lines))
 
     def log_message(self, message, level="INFO", log_to_console_cancel=False):
-        """Queue a log message for asynchronous processing and optionally print to console."""
-        lineno = inspect.currentframe().f_back.f_back.f_lineno
+        frame = inspect.currentframe().f_back.f_back  # Two levels up in the call stack
+        lineno = frame.f_lineno
+        
+        # Try to get the classname
+        caller_class = None
+        if 'self' in frame.f_locals:
+            caller_class = frame.f_locals['self'].__class__.__name__
 
         if self.log_to_console and not log_to_console_cancel:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            formatted_message = f"[{timestamp}] [Line: {lineno}] [{level}] {message}"
+            formatted_message = f"[{timestamp}] [{caller_class or 'N/A'}]: [Line: {lineno}] [{level}] {message}"
             color = COLORS.get(level, "") if self.use_ansi_colors else ""
             reset = COLORS["RESET"] if self.use_ansi_colors else ""
             print(f"{color}{formatted_message}{reset}")

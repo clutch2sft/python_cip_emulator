@@ -1,23 +1,16 @@
+import asyncio
+import time
+import atexit
 from core.cip_server import CIPServer
 from core.cip_client import CIPClient
 from core.time.server.timesyncserver import TimeSyncServer
 from core.time.client.timesyncclient import TimeSyncClient
-import time
-import atexit
-import asyncio
+
 
 class CIPEmulator:
     def __init__(self, app_config, consumer_config, producers_config, logger_server=None, logger_client=None, logger_app=None, gui_mode=False, quiet=False):
         """
         CIPEmulator initializes and controls the server and client components based on provided configurations.
-        
-        - **Server**: Created only if `logger_server` is provided. If `logger_server` is `None`, 
-        the server is not instantiated.
-        
-        - **Clients**: Instantiated for each configuration in `producers_config` regardless of 
-        logger availability. If no logger is provided for a client, a `_null_logger` is assigned.
-        Clients only run if explicitly started using `start_all_clients()` or `start_gui_clients()`. This approach allows 
-        for flexible activation of individual clients while maintaining object references.
         """
         self.app_config = app_config
         self.consumer_config = consumer_config
@@ -25,93 +18,58 @@ class CIPEmulator:
         self.gui_mode = gui_mode
         self.quiet = quiet
         self.logger_app = logger_app
-        self.filter_factor=self.consumer_config.get("latency_filter_factor") #its a bit in the wrong place but it also doesn't make sense to put it in multiple times under each client.
         self.class_name = self.__class__.__name__
+        self.loop = asyncio.get_event_loop()
+
+        # Logging setup
+        self.server_logger = self._wrap_logger(logger_server)
+        self.client_loggers = {tag: self._wrap_logger(logger) for tag, logger in (logger_client or {}).items()}
         
-        if logger_server is None:
-            # Set up the server logger or placeholder null logger
-            self.server_logger = self._create_logger_adapter(logger_server) if logger_server else self._null_logger
-        else:
-            self.server_logger = self._create_logger_adapter(logger_server)
-
-        if logger_client is None:
-            self.logger_client = logger_client or {}
-        else:
-            self.logger_client = logger_client
-        # Initialize TimeSyncServer if in CLI mode
-        self.tsync_server = None
-        if not gui_mode:
-            self._initialize_time_sync_server()
-        
-        # Initialize CIPServer if a server logger is provided
-        self.server = CIPServer(self.server_logger, consumer_config) if logger_server else None
-
-        # Initialize producers (clients) based on the provided configuration
-        self.producers = []
-        for client_tag, producer_config in producers_config.items():
-            # Create a specific logger for each client
-            producer_logger = self._create_client_logger(client_tag)
-            producer = CIPClient(producer_logger, producer_config, tag=client_tag, quiet=self.quiet, logger_app=self.logger_app)
-            self.producers.append(producer)
-
-        # Placeholder for TimeSyncClient instance (created in start_all_clients or start_gui_clients)
+        # Time sync server and client
+        self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if not gui_mode else None
         self.tsync_client = None
+        
+        # CIPServer
+        self.server = CIPServer(self.server_logger, consumer_config) if logger_server else None
+        
+        # CIPClients
+        self.producers = [
+            CIPClient(self._create_client_logger(tag), config, tag=tag, quiet=self.quiet, logger_app=self.logger_app)
+            for tag, config in producers_config.items()
+        ]
 
-    @atexit.register
-    def on_exit():
-        print(f"CIP Emulator: Exiting the emulator...")
-        # Log to a file or your main logger if desired
-        # self.logger_app.info("Exiting the emulator...")
-
-    def _null_logger(self, message, level="INFO"):
-        """A placeholder logger that does nothing, used when no logger is configured."""
-        pass
-
-    def _create_logger_adapter(self, logger):
+    def _wrap_logger(self, logger):
         """
-        Wraps a logger to allow mode-specific (GUI/CLI) logging. Adjusts the logging
-        function based on whether GUI or CLI mode is used and respects the 'quiet' flag.
+        Wrap a logger to ensure it can be called uniformly regardless of its original structure.
+        If the logger is None, use a no-op logger instead.
         """
-        if self.gui_mode:
-            # GUI mode: Use a callable for GUI queueing
-            def log(message, level="INFO"):
-                logger(message, level=level)
-        else:
-            # CLI mode: Use full Logger instance with log level handling
-            def log(message, level="INFO"):
-                if logger:
-                    log_method = getattr(logger, level.lower(), logger.info)
-                    log_method(message, log_to_console_cancel=self.quiet)
-        return log
-
+        if logger is None:
+            return lambda message, level="INFO": None  # No-op logger
+        if callable(logger):
+            return logger
+        # Adapt logger to a callable interface
+        def wrapped_logger(message, level="INFO"):
+            log_method = getattr(logger, level.lower(), logger.info)
+            log_method(message)
+        return wrapped_logger
 
     def _create_client_logger(self, client_tag):
         """
-        Creates a logger specific to each client, appending the client tag to messages.
-        Returns a null logger if no logger is available for a client in CLI mode.
+        Create or retrieve a logger for the client, appending the tag to messages.
         """
-        if self.gui_mode:
-            # GUI mode: Use log_client_message with client tag
-            return lambda message, level="INFO": self.logger_client(message, client_tag=client_tag, level=level)
-        else:
-            # CLI mode: Retrieve specific client logger or use a placeholder
-            client_logger = self.logger_client.get(client_tag)
-            if client_logger is None:
-                return self._null_logger
-            return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(
-                message,
-                log_to_console_cancel=self.quiet
-            )
-            #return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(f"[{client_tag}] {message}")
+        client_logger = self.client_loggers.get(client_tag, self._null_logger)
+        return lambda message, level="INFO": getattr(client_logger, level.lower(), client_logger.info)(
+            f"[{client_tag}] {message}"
+        )
 
-    def _initialize_time_sync_server(self):
-        """Initializes the TimeSyncServer for time synchronization in CLI mode."""
-        self.tsync_server = TimeSyncServer(logger_app=self.logger_app)
-        self.tsync_server.start()
+    def _null_logger(self, message, level="INFO"):
+        """A placeholder logger."""
+        pass
 
-    def _initialize_time_sync_client(self):
-        """Initializes the TimeSyncClient and waits for stability in both CLI and GUI modes."""
-        stability_reached = False
+    async def _initialize_time_sync_client(self):
+        """
+        Initialize and wait for stability in the TimeSyncClient.
+        """
         if not self.tsync_client:
             try:
                 self.tsync_client = TimeSyncClient(
@@ -119,100 +77,60 @@ class CIPEmulator:
                     logger_app=self.logger_app,
                     server_port=self.consumer_config.get("time_sync_port", 5555),
                     txrate=0.1,
-                    filter_factor=self.filter_factor
+                    filter_factor=self.consumer_config.get("latency_filter_factor"),
                 )
-                self.logger_app.info(f"{self.class_name}: Attempting to start Time Sync Client.")
-                
+                self.logger_app.info(f"{self.class_name}: Starting TimeSyncClient.")
                 if not self.tsync_client.start():
-                    self.logger_app.error(f"{self.class_name}: Server unreachable, aborting client startup.")
+                    self.logger_app.error(f"{self.class_name}: TimeSyncServer unreachable.")
                     return False
 
-                # Wait until stability is detected, with timeout
-                stability_reached = self._wait_for_stability()
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to start TimeSyncClient: {e}")
-        return stability_reached
+                start_time = time.time()
+                while not self.tsync_client.is_stable():
+                    if time.time() - start_time > 20:  # Timeout after 20 seconds
+                        self.logger_app.warning(f"{self.class_name}: TimeSyncClient stability timeout.")
+                        return False
+                    await asyncio.sleep(0.1)
 
-    def _wait_for_stability(self):
-        """Waits for TimeSyncClient to reach stability with a timeout."""
-        start_time = time.time()
-        max_wait_time = 20
-        last_log_time = start_time
-        
-        while not self.tsync_client.is_stable():
-            current_time = time.time()
-            if current_time - start_time > max_wait_time:
-                self.logger_app.warning(f"{self.class_name}: Time sync stability check timed out.")
+                self.logger_app.info(f"{self.class_name}: TimeSyncClient is stable.")
+                return True
+            except Exception as e:
+                self.logger_app.error(f"{self.class_name}: Failed to initialize TimeSyncClient: {e}")
                 return False
 
-            if current_time - last_log_time >= 1:
-                self.logger_app.info(f"{self.class_name}: Waiting for time sync stability...")
-                last_log_time = current_time
-
-            time.sleep(0.1)
-        self.logger_app.info(f"{self.class_name}: Stability detected.")
-        return True
-
-    def start_gui_clients(self):
-        """Starts clients in GUI mode, including initializing TimeSyncServer and TimeSyncClient."""
-        
-        stability_reached = self._initialize_time_sync_client()
-        if stability_reached:
-            for producer in self.producers:
-                producer.start()  # Start each producer client in GUI mode
-
-    def start_all_clients(self):
-        """Starts all configured CIPClient instances (producers) and initializes TimeSyncClient in CLI mode."""
-        stability_reached = self._initialize_time_sync_client()
-        if stability_reached:
-            # Ensure all producers start asynchronously
-            loop = asyncio.get_event_loop()
-            tasks = [producer.start() for producer in self.producers]
-            loop.run_until_complete(asyncio.gather(*tasks))
-
-    def stop_all_clients(self):
-        """Stops all configured CIPClient instances (producers) and shuts down TimeSyncClient."""
-        async def stop_clients():
-            # Stop all producers asynchronously
-            producer_stop_tasks = [producer.stop() for producer in self.producers]
-            if producer_stop_tasks:
-                await asyncio.gather(*producer_stop_tasks)
-
-            # Stop TimeSyncClient if it exists
-            if self.tsync_client:
-                await self.tsync_client.stop()
-                self.tsync_client = None
-
-        # Run the asynchronous stop process
-        asyncio.run(stop_clients())
-
-    def stop_gui_clients(self):
-        """Stops clients in GUI mode."""
-        self.stop_all_clients()  # Reuse the same stop method for simplicity
-
-    def start_server(self):
-        """Starts the CIPServer instance if it has been initialized."""
-        # Start TimeSyncServer in GUI mode if it hasn't been started yet
-        if self.gui_mode and not self.tsync_server:
-            self._initialize_time_sync_server()
-
+    async def start_server(self):
+        """
+        Start the CIPServer and TimeSyncServer asynchronously.
+        """
+        tasks = []
         if self.server:
             try:
-                # Ensure the server is started within an asyncio event loop
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # If the loop is already running (e.g., in a GUI application), create a task
-                    asyncio.create_task(self.server.start())
-                else:
-                    # Otherwise, run the server coroutine until it completes
-                    loop.run_until_complete(self.server.start())
-
-                self.logger_app.info(f"{self.class_name}: Server started successfully.")
+                self.logger_app.info(f"{self.class_name}: Starting CIPServer.")
+                tasks.append(self.server.start())  # Add CIPServer start coroutine
             except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to start server: {e}")
+                self.logger_app.error(f"{self.class_name}: Failed to start CIPServer: {e}")
 
-    def stop_server(self):
-        """Stops the CIPServer instance and TimeSyncServer if they have been initialized."""
+        if self.tsync_server:
+            try:
+                self.logger_app.info(f"{self.class_name}: Starting TimeSyncServer.")
+                self.tsync_server.start()  # Assuming TimeSyncServer runs in a separate thread
+                self.logger_app.info(f"{self.class_name}: TimeSyncServer started.")
+            except Exception as e:
+                self.logger_app.error(f"{self.class_name}: Failed to start TimeSyncServer: {e}")
+
+        if tasks:
+            await asyncio.gather(*tasks)  # Start all coroutines
+
+    async def stop_server(self):
+        """
+        Stop the CIPServer and TimeSyncServer.
+        """
+        if self.server:
+            try:
+                self.logger_app.info(f"{self.class_name}: Stopping CIPServer.")
+                await self.server.stop()
+                self.logger_app.info(f"{self.class_name}: CIPServer stopped.")
+            except Exception as e:
+                self.logger_app.error(f"{self.class_name}: Failed to stop CIPServer: {e}")
         if self.tsync_server:
             try:
                 self.tsync_server.stop()
@@ -220,9 +138,34 @@ class CIPEmulator:
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to stop TimeSyncServer: {e}")
 
-        if self.server:
-            try:
-                self.server.stop()
-                self.logger_app.info(f"{self.class_name}: Server stopped successfully.")
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to stop server: {e}")
+    async def start_all_clients(self):
+        """
+        Start all CIPClients and ensure TimeSyncClient stability.
+        """
+        if await self._initialize_time_sync_client():
+            self.logger_app.info(f"{self.class_name}: Starting all clients.")
+            await asyncio.gather(*[client.start() for client in self.producers])
+
+    async def stop_all_clients(self):
+        """
+        Stop all CIPClients and the TimeSyncClient.
+        """
+        self.logger_app.info(f"{self.class_name}: Stopping all clients.")
+        await asyncio.gather(*[client.stop() for client in self.producers])
+        if self.tsync_client:
+            self.tsync_client.stop()
+            self.tsync_client = None
+            self.logger_app.info(f"{self.class_name}: TimeSyncClient stopped.")
+
+    async def run(self):
+        """
+        Main entry point for running the emulator.
+        """
+        try:
+            await self.start_server()
+            await self.start_all_clients()
+        except asyncio.CancelledError:
+            self.logger_app.info(f"{self.class_name}: Emulator canceled.")
+        finally:
+            await self.stop_all_clients()
+            await self.stop_server()
