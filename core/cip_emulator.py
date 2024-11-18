@@ -23,7 +23,7 @@ class CIPEmulator:
 
         # Logging setup
         self.server_logger = self._wrap_logger(logger_server)
-        self.client_loggers = {tag: self._wrap_logger(logger) for tag, logger in (logger_client or {}).items()}
+        #self.client_loggers = {tag: self._wrap_logger(logger) for tag, logger in (logger_client or {}).items()}
         
         # Time sync server and client
         self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if not gui_mode else None

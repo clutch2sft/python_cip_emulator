@@ -15,7 +15,7 @@ class CIPServer:
     async def start(self):
         """Start the CIP server."""
         self.running = True
-        self.logger("{self.__class__.__name__}: CIP Server is starting...", level="INFO")
+        self.logger(f"{self.__class__.__name__}: CIP Server is starting...", level="INFO")
         try:
             await asyncio.gather(
                 self.start_udp_server(),
@@ -23,7 +23,7 @@ class CIPServer:
                 self.process_udp_packets(),
             )
         except asyncio.CancelledError:
-            self.logger("{self.__class__.__name__}: CIP Server is shutting down...", level="INFO")
+            self.logger(f"{self.__class__.__name__}: CIP Server is shutting down...", level="INFO")
         except Exception as e:
             self.logger(f"{self.__class__.__name__}: CIP Server failed: {e}", level="ERROR")
             raise  # Ensure exceptions propagate for debugging
@@ -40,17 +40,17 @@ class CIPServer:
         if self.udp_socket:
             self.udp_socket.close()
             self.udp_socket = None
-        self.logger("{self.__class__.__name__}: CIP Server stopped.", level="INFO")
+        self.logger(f"{self.__class__.__name__}: CIP Server stopped.", level="INFO")
 
     async def start_tcp_server(self):
         """Start the TCP server."""
-        self.logger("{self.__class__.__name__}: Initializing TCP server...", level="INFO")
+        self.logger(f"{self.__class__.__name__}: Initializing TCP server...", level="INFO")
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.tcp_socket.bind(("", self.consumer_config.get("tcp_port", 1502)))
         self.tcp_socket.listen(5)
         self.tcp_socket.setblocking(False)
-        self.logger("{self.__class__.__name__}: TCP server listening on port 1502.", level="INFO")
+        self.logger(f"{self.__class__.__name__}: TCP server listening on port 1502.", level="INFO")
 
         loop = asyncio.get_running_loop()
 
@@ -83,12 +83,12 @@ class CIPServer:
 
     async def start_udp_server(self):
         """Start the UDP server."""
-        self.logger("{self.__class__.__name__}: Initializing UDP server...", level="INFO")
+        self.logger(f"{self.__class__.__name__}: Initializing UDP server...", level="INFO")
         try:
             self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.udp_socket.bind(("", self.consumer_config.get("udp_port", 2222)))
-            self.logger("{self.__class__.__name__}: UDP server listening on port 2222.", level="INFO")
+            self.logger(f"{self.__class__.__name__}: UDP server listening on port 2222.", level="INFO")
         except Exception as e:
             self.logger(f"{self.__class__.__name__}: Failed to initialize UDP server: {e}", level="ERROR")
             raise
