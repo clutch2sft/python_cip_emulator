@@ -93,6 +93,12 @@ class CIPEmulator:
 
                 self.logger_app.info(f"{self.class_name}: TimeSyncClient is stable.")
                 return True
+            
+            except asyncio.CancelledError:
+                self.logger_app.warning(f"{self.class_name}: Initialization cancelled.")
+                # Perform cleanup if necessary
+                raise  # Re-raise to propagate cancellation
+    
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to initialize TimeSyncClient: {e}")
                 return False
@@ -106,6 +112,10 @@ class CIPEmulator:
             try:
                 self.logger_app.info(f"{self.class_name}: Starting CIPServer.")
                 tasks.append(self.server.start())  # Add CIPServer start coroutine
+            except asyncio.CancelledError:
+                self.logger_app.warning(f"{self.class_name}: Initialization cancelled.")
+                # Perform cleanup if necessary
+                raise  # Re-raise to propagate cancellation
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to start CIPServer: {e}")
 
@@ -114,29 +124,37 @@ class CIPEmulator:
                 self.logger_app.info(f"{self.class_name}: Starting TimeSyncServer.")
                 self.tsync_server.start()  # Assuming TimeSyncServer runs in a separate thread
                 self.logger_app.info(f"{self.class_name}: TimeSyncServer started.")
+            except asyncio.CancelledError:
+                self.logger_app.warning(f"{self.class_name}: Initialization cancelled.")
+                # Perform cleanup if necessary
+                raise  # Re-raise to propagate cancellation
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to start TimeSyncServer: {e}")
 
         if tasks:
-            await asyncio.gather(*tasks)  # Start all coroutines
+            try:
+                await asyncio.gather(*tasks)  # Start all coroutines
+            except asyncio.CancelledError:
+                self.logger_app.warning(f"{self.class_name}: Cancellation during server startup.")
+                raise  # Ensure cancellation propagates
 
     async def stop_server(self):
         """
         Stop the CIPServer and TimeSyncServer.
         """
-        if self.server:
-            try:
+        try:
+            if self.server:
                 self.logger_app.info(f"{self.class_name}: Stopping CIPServer.")
                 await self.server.stop()
                 self.logger_app.info(f"{self.class_name}: CIPServer stopped.")
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to stop CIPServer: {e}")
-        if self.tsync_server:
-            try:
+            if self.tsync_server:
                 self.tsync_server.stop()
                 self.logger_app.info(f"{self.class_name}: TimeSyncServer stopped.")
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to stop TimeSyncServer: {e}")
+        except asyncio.CancelledError:
+            self.logger_app.warning(f"{self.class_name}: Cancellation during server shutdown.")
+            raise  # Ensure cancellation propagates
+        except Exception as e:
+            self.logger_app.error(f"{self.class_name}: Failed to stop server: {e}")
 
     async def start_all_clients(self):
         """
@@ -144,18 +162,27 @@ class CIPEmulator:
         """
         if await self._initialize_time_sync_client():
             self.logger_app.info(f"{self.class_name}: Starting all clients.")
-            await asyncio.gather(*[client.start() for client in self.producers])
-
+            try:
+                await asyncio.gather(*[client.start() for client in self.producers])
+            except asyncio.CancelledError:
+                self.logger_app.warning(f"{self.class_name}: Cancellation during client startup.")
+                raise  # Ensure cancellation propagates
+            
     async def stop_all_clients(self):
         """
         Stop all CIPClients and the TimeSyncClient.
         """
         self.logger_app.info(f"{self.class_name}: Stopping all clients.")
-        await asyncio.gather(*[client.stop() for client in self.producers])
-        if self.tsync_client:
-            self.tsync_client.stop()
-            self.tsync_client = None
-            self.logger_app.info(f"{self.class_name}: TimeSyncClient stopped.")
+        try:
+            await asyncio.gather(*[client.stop() for client in self.producers])
+        except asyncio.CancelledError:
+            self.logger_app.warning(f"{self.class_name}: Cancellation during client shutdown.")
+            raise  # Ensure cancellation propagates
+        finally:
+            if self.tsync_client:
+                self.tsync_client.stop()
+                self.tsync_client = None
+                self.logger_app.info(f"{self.class_name}: TimeSyncClient stopped.")
 
     async def run(self):
         """

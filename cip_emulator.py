@@ -100,44 +100,54 @@ def main():
     """
     Main entry point for the CIP Emulator. Parses arguments, loads configurations, and starts the emulator.
     """
-    # Load configuration
-    config = load_config(CONFIG_PATH)
-    app_config, consumer_config, producers_config = (
-        config.get("app", {}),
-        config.get("consumer", {}),
-        config.get("producers", {}),
-    )
-    hostname = socket.gethostname()
+    try:
+        # Load configuration
+        config = load_config(CONFIG_PATH)
+        app_config, consumer_config, producers_config = (
+            config.get("app", {}),
+            config.get("consumer", {}),
+            config.get("producers", {}),
+        )
+        hostname = socket.gethostname()
 
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(
-        description="CIP Emulator - Run in GUI or headless mode with server, client, or both."
-    )
-    parser.add_argument("--no-gui", action="store_true", help="Run the emulator in headless mode without GUI.")
-    parser.add_argument("--server-only", action="store_true", help="Run only the server.")
-    parser.add_argument("--client-only", action="store_true", help="Run only the clients.")
-    parser.add_argument("--both", action="store_true", help="Run both server and clients.")
-    parser.add_argument("--show-config", action="store_true", help="Display the current configuration and exit.")
-    parser.add_argument("--quiet", action="store_true", help="Suppress packet-sending logs from clients.")
-    args = parser.parse_args()
+        # Parse command-line arguments
+        parser = argparse.ArgumentParser(
+            description="CIP Emulator - Run in GUI or headless mode with server, client, or both."
+        )
+        parser.add_argument("--no-gui", action="store_true", help="Run the emulator in headless mode without GUI.")
+        parser.add_argument("--server-only", action="store_true", help="Run only the server.")
+        parser.add_argument("--client-only", action="store_true", help="Run only the clients.")
+        parser.add_argument("--both", action="store_true", help="Run both server and clients.")
+        parser.add_argument("--show-config", action="store_true", help="Display the current configuration and exit.")
+        parser.add_argument("--quiet", action="store_true", help="Suppress packet-sending logs from clients.")
+        args = parser.parse_args()
 
-    # Handle --show-config argument
-    if args.show_config:
-        display_config(app_config, consumer_config, producers_config)
-        return
+        # Handle --show-config argument
+        if args.show_config:
+            display_config(app_config, consumer_config, producers_config)
+            return
 
-    # Determine mode: GUI by default if no CLI flags are set
-    if not any([args.no_gui, args.server_only, args.client_only, args.both]):
-        from gui.cip_gui import CIPGUI
+        # Determine mode: GUI by default if no CLI flags are set
+        if not any([args.no_gui, args.server_only, args.client_only, args.both]):
+            from gui.cip_gui import CIPGUI
 
-        emulator_logger = create_threaded_logger(name=f"{hostname}_emulator")
-        emulator_logger.info("Main entry function: Starting CIP Emulator in GUI mode.")
-        gui = CIPGUI(config_path=CONFIG_PATH, logger_app=emulator_logger)
-        gui.run()
-        return
+            emulator_logger = create_threaded_logger(name=f"{hostname}_emulator")
+            emulator_logger.info("Main entry function: Starting CIP Emulator in GUI mode.")
+            gui = CIPGUI(config_path=CONFIG_PATH, logger_app=emulator_logger)
+            gui.run()
+            return
 
-    # Headless (CLI) mode
-    asyncio.run(run_emulator(args, config, hostname))
+        # Headless (CLI) mode
+        asyncio.run(run_emulator(args, config, hostname))
+    
+    except KeyboardInterrupt:
+        print("Main entry function: Caught KeyboardInterrupt. Exiting the emulator...")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        # Optionally log or re-raise the error for debugging:
+        # raise
+    finally:
+        print("Main entry function: Cleanup complete.")
 
 
 if __name__ == "__main__":
