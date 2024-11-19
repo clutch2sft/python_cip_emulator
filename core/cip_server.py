@@ -85,7 +85,7 @@ class CIPServer:
                 self.logger(f"{self.__class__.__name__}: TCP server shutting down.", level="INFO")
                 break
             except Exception as e:
-                self.logger(f"Error accepting TCP connection: {e}", level="ERROR")
+                self.logger(f"{self.__class__.__name__}: Error accepting TCP connection: {e}", level="ERROR")
 
     async def handle_tcp_client(self, conn, addr):
         """Handle a single TCP client."""
@@ -101,7 +101,7 @@ class CIPServer:
         except asyncio.CancelledError:
             self.logger(f"{self.__class__.__name__}: TCP client handler cancelled for {addr}.", level="INFO")
         except Exception as e:
-            self.logger(f"Error handling TCP client {addr}: {e}", level="ERROR")
+            self.logger(f"{self.__class__.__name__}: Error handling TCP client {addr}: {e}", level="ERROR")
         finally:
             conn.close()
             self.logger(f"{self.__class__.__name__}: TCP connection with {addr} closed.", level="INFO")
