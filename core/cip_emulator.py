@@ -18,19 +18,18 @@ class CIPEmulator:
         self.quiet = quiet
         self.logger_app = logger_app
         self.class_name = self.__class__.__name__
-        self.loop = asyncio.get_event_loop()
 
         # Logging setup
         self.server_logger = self._wrap_logger(logger_server) if logger_server else self._null_logger
-        #self.client_loggers = {tag: self._wrap_logger(logger) for tag, logger in (logger_client or {}).items()}
         self.client_loggers = logger_client or {}
+
         # Time sync server and client
         self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if not gui_mode else None
         self.tsync_client = None
-        
+
         # CIPServer
         self.server = CIPServer(self.server_logger, consumer_config) if logger_server else None
-        
+
         # CIPClients
         self.producers = [
             CIPClient(self._create_client_logger(tag), config, tag=tag, quiet=self.quiet, logger_app=self.logger_app)
@@ -46,10 +45,11 @@ class CIPEmulator:
             return lambda message, level="INFO": None  # No-op logger
         if callable(logger):
             return logger
-        # Adapt logger to a callable interface
+
         def wrapped_logger(message, level="INFO"):
             log_method = getattr(logger, level.lower(), logger.info)
             log_method(message, log_to_console_cancel=self.quiet)
+
         return wrapped_logger
 
     def _create_client_logger(self, client_tag):
@@ -89,7 +89,11 @@ class CIPEmulator:
                     if time.time() - start_time > 20:  # Timeout after 20 seconds
                         self.logger_app.warning(f"{self.class_name}: TimeSyncClient stability timeout.")
                         return False
-                    await asyncio.sleep(0.1)
+                    try:
+                        await asyncio.sleep(0.1)
+                    except asyncio.CancelledError:
+                        self.logger_app.info(f"{self.class_name}: TimeSyncClient initialization cancelled.")
+                        raise
 
                 self.logger_app.info(f"{self.class_name}: TimeSyncClient is stable.")
                 return True
@@ -102,41 +106,54 @@ class CIPEmulator:
         Start the CIPServer and TimeSyncServer asynchronously.
         """
         tasks = []
+
         if self.server:
             try:
                 self.logger_app.info(f"{self.class_name}: Starting CIPServer.")
-                tasks.append(self.server.start())  # Add CIPServer start coroutine
+                tasks.append(self.server.start())
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to start CIPServer: {e}")
 
         if self.tsync_server:
             try:
                 self.logger_app.info(f"{self.class_name}: Starting TimeSyncServer.")
-                self.tsync_server.start()  # Assuming TimeSyncServer runs in a separate thread
-                self.logger_app.info(f"{self.class_name}: TimeSyncServer started.")
+                tasks.append(self.tsync_server.start())
             except Exception as e:
                 self.logger_app.error(f"{self.class_name}: Failed to start TimeSyncServer: {e}")
 
         if tasks:
-            await asyncio.gather(*tasks)  # Start all coroutines
+            try:
+                await asyncio.gather(*tasks)
+            except asyncio.CancelledError:
+                self.logger_app.warning(f"{self.class_name}: Cancellation received during server startup.")
+                await self.stop_server()
+                raise KeyboardInterrupt()
 
     async def stop_server(self):
         """
         Stop the CIPServer and TimeSyncServer.
         """
-        if self.server:
-            try:
-                self.logger_app.info(f"{self.class_name}: Stopping CIPServer.")
-                await self.server.stop()
-                self.logger_app.info(f"{self.class_name}: CIPServer stopped.")
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to stop CIPServer: {e}")
-        if self.tsync_server:
-            try:
-                self.tsync_server.stop()
-                self.logger_app.info(f"{self.class_name}: TimeSyncServer stopped.")
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to stop TimeSyncServer: {e}")
+        try:
+            if self.server:
+                try:
+                    self.logger_app.info(f"{self.class_name}: Stopping CIPServer.")
+                    await self.server.stop()
+                    self.logger_app.info(f"{self.class_name}: CIPServer stopped.")
+                except Exception as e:
+                    self.logger_app.error(f"{self.class_name}: Failed to stop CIPServer: {e}")
+
+            if self.tsync_server:
+                try:
+                    self.logger_app.info(f"{self.class_name}: Stopping TimeSyncServer.")
+                    await self.tsync_server.stop()
+                    self.logger_app.info(f"{self.class_name}: TimeSyncServer stopped.")
+                except asyncio.CancelledError:
+                    self.logger_app.warning(f"{self.class_name}: Cancellation during TimeSyncServer shutdown.")
+                    raise
+                except Exception as e:
+                    self.logger_app.error(f"{self.class_name}: Failed to stop TimeSyncServer: {e}")
+        finally:
+            self.logger_app.info(f"{self.class_name}: All servers stopped.")
 
     async def start_all_clients(self):
         """
@@ -165,7 +182,10 @@ class CIPEmulator:
             await self.start_server()
             await self.start_all_clients()
         except asyncio.CancelledError:
-            self.logger_app.info(f"{self.class_name}: Emulator canceled.")
+            self.logger_app.info(f"{self.class_name}: Emulator cancelled.")
+            raise KeyboardInterrupt()
         finally:
+            self.logger_app.info(f"{self.class_name}: Stopping all clients.")
             await self.stop_all_clients()
+            self.logger_app.info(f"{self.class_name}: Stopping server.")
             await self.stop_server()

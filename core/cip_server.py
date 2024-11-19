@@ -11,36 +11,58 @@ class CIPServer:
         self.tcp_socket = None
         self.udp_socket = None
         self.processing_queue = asyncio.Queue(maxsize=1000)
+        self.tasks = []  # Track running tasks for cancellation
 
     async def start(self):
         """Start the CIP server."""
         self.running = True
         self.logger(f"{self.__class__.__name__}: CIP Server is starting...", level="INFO")
+
         try:
-            await asyncio.gather(
-                self.start_udp_server(),
-                self.start_tcp_server(),
-                self.process_udp_packets(),
-            )
+            self.tasks = [
+                asyncio.create_task(self.start_udp_server(), name="UDP Server"),
+                asyncio.create_task(self.start_tcp_server(), name="TCP Server"),
+                asyncio.create_task(self.process_udp_packets(), name="UDP Packet Processor"),
+            ]
+            await asyncio.gather(*self.tasks)
         except asyncio.CancelledError:
-            self.logger(f"{self.__class__.__name__}: CIP Server is shutting down...", level="INFO")
+            self.logger(f"{self.__class__.__name__}: CIP Server received cancellation. Shutting down...", level="INFO")
+            await self.stop()
+            raise  # Re-raise cancellation to propagate
         except Exception as e:
             self.logger(f"{self.__class__.__name__}: CIP Server failed: {e}", level="ERROR")
-            raise  # Ensure exceptions propagate for debugging
+            raise
         finally:
-            await self.stop()
+            try:
+                await self.stop()
+            except Exception as e:
+                self.logger(f"{self.__class__.__name__}: Error during shutdown: {e}", level="ERROR")
 
 
     async def stop(self):
         """Stop the CIP server."""
+        self.logger(f"{self.__class__.__name__}: Stopping CIP Server...", level="INFO")
         self.running = False
+
+        # Cancel running tasks
+        for task in self.tasks:
+            if not task.done():
+                task.cancel()
+        results = await asyncio.gather(*self.tasks, return_exceptions=True)
+        for result in results:
+            if isinstance(result, asyncio.CancelledError):
+                raise result  # Propagate cancellation
+
+        # Close sockets
         if self.tcp_socket:
             self.tcp_socket.close()
             self.tcp_socket = None
         if self.udp_socket:
             self.udp_socket.close()
             self.udp_socket = None
+
         self.logger(f"{self.__class__.__name__}: CIP Server stopped.", level="INFO")
+
 
     async def start_tcp_server(self):
         """Start the TCP server."""
@@ -59,8 +81,9 @@ class CIPServer:
                 conn, addr = await loop.run_in_executor(None, self.tcp_socket.accept)
                 self.logger(f"{self.__class__.__name__}: TCP connection established with {addr}", level="INFO")
                 asyncio.create_task(self.handle_tcp_client(conn, addr))
-            except BlockingIOError:
-                await asyncio.sleep(0.1)
+            except asyncio.CancelledError:
+                self.logger(f"{self.__class__.__name__}: TCP server shutting down.", level="INFO")
+                break
             except Exception as e:
                 self.logger(f"Error accepting TCP connection: {e}", level="ERROR")
 
@@ -75,6 +98,8 @@ class CIPServer:
                         self.logger(f"{self.__class__.__name__}: Received TCP message from {addr}: {data.decode()}", level="INFO")
                 except socket.timeout:
                     continue
+        except asyncio.CancelledError:
+            self.logger(f"{self.__class__.__name__}: TCP client handler cancelled for {addr}.", level="INFO")
         except Exception as e:
             self.logger(f"Error handling TCP client {addr}: {e}", level="ERROR")
         finally:
@@ -102,6 +127,9 @@ class CIPServer:
                 if self.debug:
                     self.logger(f"{self.__class__.__name__}: Packet received from {addr}: {data}", level="DEBUG")
                 await self.processing_queue.put((data, addr, rcvd_timestamp))
+            except asyncio.CancelledError:
+                self.logger(f"{self.__class__.__name__}: UDP server shutting down.", level="INFO")
+                break
             except Exception as e:
                 self.logger(f"{self.__class__.__name__}: Error receiving UDP packet: {e}", level="ERROR")
 
@@ -111,6 +139,9 @@ class CIPServer:
             try:
                 data, addr, rcvd_timestamp = await self.processing_queue.get()
                 asyncio.create_task(self.handle_udp_packet(data, addr, rcvd_timestamp))
+            except asyncio.CancelledError:
+                self.logger(f"{self.__class__.__name__}: UDP packet processor shutting down.", level="INFO")
+                break
             except Exception as e:
                 self.logger(f"{self.__class__.__name__}: Error processing UDP packet: {e}", level="ERROR")
 

@@ -2,7 +2,8 @@ import argparse
 import json
 import socket
 import asyncio
-from core.cip_emulator import CIPEmulator
+import signal
+from core.cip_emulator import CIPEmulator  # Ensure this module exists and is correct
 from utils.config_loader import load_config
 from utils.logger import create_threaded_logger
 import atexit
@@ -17,7 +18,7 @@ def on_exit():
     print("Main entry function: Exiting the emulator...")
 
 
-async def run_emulator(args, config, hostname):
+async def run_emulator(args, config, hostname, stop_event):
     """
     Main coroutine to run the emulator in either GUI or headless mode based on arguments.
     """
@@ -73,15 +74,35 @@ async def run_emulator(args, config, hostname):
             await emulator.start_all_clients()
 
         emulator_logger.info("Main entry function: Press Ctrl+C to stop the emulator.")
-        while True:
-            await asyncio.sleep(0.5)  # Keep the loop alive and responsive to interrupts
 
-    except KeyboardInterrupt:
-        emulator_logger.info("Main entry function: Keyboard interrupt received. Shutting down emulator...")
+        # Wait until the stop_event is set
+        await stop_event.wait()
+
+    except asyncio.CancelledError:
+        emulator_logger.warning("Main entry function: Task cancelled. Cleaning up...")
+    finally:
+        await shutdown_emulator(emulator, emulator_logger, args)
+
+    return emulator, emulator_logger
+
+
+async def shutdown_emulator(emulator, logger, args):
+    """
+    Gracefully stop emulator components and shut down the logger.
+    """
+    try:
         if args.server_only or args.both:
+            logger.info("Main entry function: Shutting down server.")
             await emulator.stop_server()
         if args.client_only or args.both:
+            logger.info("Main entry function: Shutting down clients.")
             await emulator.stop_all_clients()
+    except Exception as e:
+        logger.error(f"Main entry function: Error during shutdown: {e}")
+    finally:
+        # Stop the logger as the final step
+        logger.info("Main entry function: Stopping logger as last step.")
+        await emulator.stop_logger()
 
 
 def display_config(app_config, consumer_config, producer_config):
@@ -136,9 +157,26 @@ def main():
         gui.run()
         return
 
-    # Headless (CLI) mode
-    asyncio.run(run_emulator(args, config, hostname))
+    # Manual event loop for graceful shutdown
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    # Create a stop event
+    stop_event = asyncio.Event()
+
+    # Signal handlers to set the stop event
+    def signal_handler():
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, lambda sig, frame: signal_handler())
+    signal.signal(signal.SIGTERM, lambda sig, frame: signal_handler())
+
+    try:
+        emulator, emulator_logger = loop.run_until_complete(run_emulator(args, config, hostname, stop_event))
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
 
 
 if __name__ == "__main__":
-    cProfile.run('main()', 'profile_results.prof')
+    cProfile.run("main()", "profile_results.prof")
