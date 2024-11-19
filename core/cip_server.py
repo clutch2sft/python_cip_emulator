@@ -63,7 +63,6 @@ class CIPServer:
 
         self.logger(f"{self.__class__.__name__}: CIP Server stopped.", level="INFO")
 
-
     async def start_tcp_server(self):
         """Start the TCP server."""
         self.logger(f"{self.__class__.__name__}: Initializing TCP server...", level="INFO")
@@ -75,6 +74,21 @@ class CIPServer:
         self.logger(f"{self.__class__.__name__}: TCP server listening on port 1502.", level="INFO")
 
         loop = asyncio.get_running_loop()
+
+        while self.running:
+            try:
+                conn, addr = await loop.sock_accept(self.tcp_socket)  # Proper asyncio-compatible accept
+                self.logger(f"{self.__class__.__name__}: TCP connection established with {addr}", level="INFO")
+                asyncio.create_task(self.handle_tcp_client(conn, addr))
+            except asyncio.CancelledError:
+                self.logger(f"{self.__class__.__name__}: TCP server shutting down.", level="INFO")
+                break
+            except Exception as e:
+                self.logger(f"{self.__class__.__name__}: Error accepting TCP connection: {e}", level="ERROR")
+                await asyncio.sleep(0.1)  # Prevent tight loop on repeated errors
+
+
+
 
         while self.running:
             try:
