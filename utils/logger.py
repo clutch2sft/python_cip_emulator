@@ -16,7 +16,7 @@ COLORS = {
 
 
 class ThreadedLogger:
-    def __init__(self, name="default", log_to_file=True, log_to_console=True, use_ansi_colors=False, log_directory="./logs", batch_size=75, flush_interval=1):
+    def __init__(self, name="default", log_to_file=True, log_to_console=True, use_ansi_colors=False, log_directory="./logs", batch_size=75, flush_interval=1, debug=False):
         self.name = name
         self.log_to_file = log_to_file
         self.log_to_console = log_to_console
@@ -26,6 +26,7 @@ class ThreadedLogger:
         self.flush_interval = flush_interval
         self.log_file_path = None
         self._shutdown_complete = False  # Track shutdown completion
+        self.debug = debug
 
         self.log_queue = deque()
         self.queue_lock = Lock()
@@ -65,11 +66,13 @@ class ThreadedLogger:
 
         while not self.stop_event.is_set():
             try:
+                # Wait for new messages or a timeout
                 async with self.condition:
                     await asyncio.wait_for(self.condition.wait(), timeout=self.flush_interval)
             except asyncio.TimeoutError:
                 pass  # Timeout is expected; proceed to flush if needed
             except asyncio.CancelledError:
+                print("Process queue cancelled.")  # Debug message
                 break  # Allow graceful shutdown on cancellation
 
             # Process messages from the queue
@@ -91,16 +94,26 @@ class ThreadedLogger:
         if buffer:
             await self._flush_buffer(buffer)
 
+        print("Process queue exiting.")  # Debug message
+
+
+
+
     async def _flush_buffer(self, buffer):
         """Asynchronously write a batch of log messages to the file."""
-        if self.log_to_file and self.log_file_path:
-            async with aiofiles.open(self.log_file_path, "a") as file:
-                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                log_lines = [
-                    f"[{timestamp}] [Line: {lineno}] [{level}] {message}\n"
-                    for message, level, lineno in buffer
-                ]
-                await file.write("".join(log_lines))
+        try:
+            if self.log_to_file and self.log_file_path:
+                async with aiofiles.open(self.log_file_path, "a") as file:
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    log_lines = [
+                        f"[{timestamp}] [Line: {lineno}] [{level}] {message}\n"
+                        for message, level, lineno in buffer
+                    ]
+                    await file.write("".join(log_lines))
+        except asyncio.CancelledError:
+            print("Flush buffer cancelled.")  # Debug
+            raise
+
 
     def log_message(self, message, level="INFO", log_to_console_cancel=False):
         """Add a log message to the queue."""
@@ -150,25 +163,43 @@ class ThreadedLogger:
         self._shutdown_complete = True
         self.stop_event.set()  # Signal thread to stop
 
+        print("Notifying condition for shutdown...")
+        # Notify the condition to unblock _process_queue
+        async with self.condition:
+            self.condition.notify_all()
+        print("Condition notified. Cancelling tasks...")
+
         # Cancel all tasks in the logger's event loop
         if self.loop.is_running():
             tasks = [t for t in asyncio.all_tasks(self.loop) if not t.done()]
-            for task in tasks:
-                task.cancel()  # Cancel tasks
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    pass  # Ignore expected cancellation
+            if self.debug:
+                print(f"Active tasks at shutdown: {tasks}")  # Debug
+                for task in tasks:
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        print(f"Cancelled task: {task}")  # Debug
 
             # Stop the loop safely
             self.loop.call_soon_threadsafe(self.loop.stop)
 
-        # Ensure the thread exits
-        self.thread.join()
+
 
     def flush_and_stop(self):
         """Flush remaining logs and stop the logger gracefully."""
-        asyncio.run(self.shutdown())  # Clean shutdown of the logger
+        if self.loop.is_running():
+            # Run shutdown in the logger's loop
+            asyncio.run_coroutine_threadsafe(self.shutdown(), self.loop).result()
+
+        # Call join after shutdown coroutine completes
+        self.thread.join(timeout=5)  # Timeout ensures no indefinite hangs
+        if self.thread.is_alive():
+            print("Logger thread failed to terminate in time.")  # Debug
+
+    # def flush_and_stop(self):
+    #     """Flush remaining logs and stop the logger gracefully."""
+    #     asyncio.run(self.shutdown())  # Clean shutdown of the logger
 
 def create_threaded_logger(
     name,

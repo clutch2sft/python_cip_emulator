@@ -1,5 +1,6 @@
 import asyncio
 import time
+import threading
 from core.cip_server import CIPServer
 from core.cip_client import CIPClient
 from core.time.server.timesyncserver import TimeSyncServer
@@ -11,6 +12,7 @@ class CIPEmulator:
         """
         CIPEmulator initializes and controls the server and client components based on provided configurations.
         """
+        # Name the main thread for this emulator instance
         self.app_config = app_config
         self.consumer_config = consumer_config
         self.producers_config = producers_config
@@ -18,6 +20,8 @@ class CIPEmulator:
         self.quiet = quiet
         self.logger_app = logger_app
         self.class_name = self.__class__.__name__
+        threading.current_thread().name = f"{self.class_name}_MainThread"
+
 
         # Logging setup
         self.server_logger = self._wrap_logger(logger_server) if logger_server else self._null_logger
@@ -109,6 +113,8 @@ class CIPEmulator:
 
         if self.server:
             try:
+                thread_name = f"{self.class_name}_CIPServerThread"
+                threading.current_thread().name = thread_name
                 self.logger_app.info(f"{self.class_name}: Starting CIPServer.")
                 tasks.append(self.server.start())
             except Exception as e:
@@ -116,6 +122,8 @@ class CIPEmulator:
 
         if self.tsync_server:
             try:
+                thread_name = f"{self.class_name}_TimeSyncServerThread"
+                threading.current_thread().name = thread_name
                 self.logger_app.info(f"{self.class_name}: Starting TimeSyncServer.")
                 tasks.append(self.tsync_server.start())
             except Exception as e:
@@ -160,7 +168,10 @@ class CIPEmulator:
         Start all CIPClients and ensure TimeSyncClient stability.
         """
         if await self._initialize_time_sync_client():
-            self.logger_app.info(f"{self.class_name}: Starting all clients.")
+            for client in self.producers:
+                thread_name = f"{self.class_name}_Client_{client.tag}"
+                threading.current_thread().name = thread_name
+                self.logger_app.info(f"{self.class_name}: Starting client {client.tag} on thread {thread_name}.")
             await asyncio.gather(*[client.start() for client in self.producers])
 
     async def stop_all_clients(self):

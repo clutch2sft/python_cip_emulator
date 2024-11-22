@@ -1,4 +1,5 @@
 import argparse
+import threading
 import json
 import socket
 import asyncio
@@ -6,8 +7,13 @@ import signal
 from core.cip_emulator import CIPEmulator  # Ensure this module exists and is correct
 from utils.config_loader import load_config
 from utils.logger import create_threaded_logger
+from utils.asynciothreadmanager import AsyncioThreadManager
 import atexit
 import cProfile
+
+# Set a name for the main thread
+threading.current_thread().name = "MainCIPThread"
+
 
 CONFIG_PATH = "config.json"  # Path to the configuration file
 
@@ -16,6 +22,13 @@ CONFIG_PATH = "config.json"  # Path to the configuration file
 def on_exit():
     """Clean-up function triggered at exit."""
     print("Main entry function: Exiting the emulator...")
+
+async def monitor_emulator_state(interval: int = 10, emulator_logger=None ):
+    while True:
+        emulator_logger.info(f"Active threads: {[t.name for t in threading.enumerate()]}")
+        emulator_logger.info(f"Active tasks: {[task.get_name() for task in asyncio.all_tasks()]}")
+        await asyncio.sleep(interval)
+
 
 
 async def run_emulator(args, config, hostname, stop_event):
@@ -29,7 +42,11 @@ async def run_emulator(args, config, hostname, stop_event):
     )
 
     emulator_logger = create_threaded_logger(name=f"{hostname}_emulator")
-    emulator_logger.info("Main entry function: Starting CIP Emulator.")
+    emulator_logger.info(f"Main entry function: Starting CIP Emulator in thread: {threading.current_thread().name}.")
+
+    # Log task details
+    current_task = asyncio.current_task()
+    emulator_logger.info(f"Running in task '{current_task.get_name()}' (ID: {id(current_task)}).")
 
     # Initialize loggers
     server_logger = None
@@ -37,7 +54,7 @@ async def run_emulator(args, config, hostname, stop_event):
 
     if args.server_only or args.both:
         server_logger = create_threaded_logger(name=f"{hostname}_server", use_ansi_colors=True)
-        emulator_logger.info(f"Main entry function: Server logger initialized as {hostname}_server")
+        emulator_logger.info(f"Server logger initialized as {hostname}_server in thread: {threading.current_thread().name}.")
 
     if args.client_only or args.both:
         client_loggers = {
@@ -45,45 +62,50 @@ async def run_emulator(args, config, hostname, stop_event):
             for tag in producers_config
         }
         for client_logger_name in client_loggers.keys():
-            emulator_logger.info(f"Main entry function: Initializing client logger for {client_logger_name}")
+            emulator_logger.info(f"Initializing client logger '{client_logger_name}' in thread: {threading.current_thread().name}.")
 
-    # Initialize the emulator
-    emulator = CIPEmulator(
-        app_config,
-        consumer_config,
-        producers_config,
-        logger_server=server_logger,
-        logger_client=client_loggers,
-        logger_app=emulator_logger,
-        gui_mode=False,
-        quiet=args.quiet,
-    )
-
-    # Start components based on CLI arguments
     try:
+        emulator = CIPEmulator(
+            app_config,
+            consumer_config,
+            producers_config,
+            logger_server=server_logger,
+            logger_client=client_loggers,
+            logger_app=emulator_logger,
+            gui_mode=False,
+            quiet=args.quiet,
+        )
+        emulator_logger.info("CIP Emulator initialized successfully.")
+    except Exception as e:
+        emulator_logger.error(f"Failed to initialize CIP Emulator: {e}")
+        raise
+
+    try:
+        # Start components based on CLI arguments
         if args.server_only:
-            emulator_logger.info("Main entry function: Starting server only.")
+            emulator_logger.info("Starting server only.")
             await emulator.start_server()
         elif args.client_only:
-            emulator_logger.info("Main entry function: Starting clients only.")
+            emulator_logger.info("Starting clients only.")
             await emulator.start_all_clients()
         elif args.both:
-            emulator_logger.info("Main entry function: Starting both server and clients.")
+            emulator_logger.info("Starting both server and clients.")
             await emulator.start_server()
             await asyncio.sleep(1)  # Ensure the server is ready
             await emulator.start_all_clients()
 
-        emulator_logger.info("Main entry function: Press Ctrl+C to stop the emulator.")
+        emulator_logger.info("Press Ctrl+C to stop the emulator.")
+
+        # Monitor threads/tasks during runtime
+        asyncio.create_task(monitor_emulator_state(interval=10, emulator_logger=emulator_logger))
 
         # Wait until the stop_event is set
         await stop_event.wait()
 
     except asyncio.CancelledError:
-        emulator_logger.warning("Main entry function: Task cancelled. Cleaning up...")
+        emulator_logger.warning("Cancellation received. Cleaning up...")
     finally:
         await shutdown_emulator(emulator, emulator_logger, args)
-
-    return emulator, emulator_logger
 
 
 async def shutdown_emulator(emulator, logger, args):
@@ -93,16 +115,25 @@ async def shutdown_emulator(emulator, logger, args):
     try:
         if args.server_only or args.both:
             logger.info("Main entry function: Shutting down server.")
-            await emulator.stop_server()
+            try:
+                await emulator.stop_server()
+            except asyncio.CancelledError:
+                logger.warning("Server shutdown interrupted by cancellation.")
         if args.client_only or args.both:
             logger.info("Main entry function: Shutting down clients.")
-            await emulator.stop_all_clients()
+            try:
+                await emulator.stop_all_clients()
+            except asyncio.CancelledError:
+                logger.warning("Client shutdown interrupted by cancellation.")
     except Exception as e:
         logger.error(f"Main entry function: Error during shutdown: {e}")
     finally:
         # Stop the logger as the final step
         logger.info("Main entry function: Stopping logger as last step.")
-        await emulator.stop_logger()
+        try:
+            await emulator.stop_logger()
+        except asyncio.CancelledError:
+            logger.warning("Logger shutdown interrupted by cancellation.")
 
 
 def display_config(app_config, consumer_config, producer_config):
@@ -147,16 +178,6 @@ def main():
         display_config(app_config, consumer_config, producers_config)
         return
 
-    # Determine mode: GUI by default if no CLI flags are set
-    if not any([args.no_gui, args.server_only, args.client_only, args.both]):
-        from gui.cip_gui import CIPGUI
-
-        emulator_logger = create_threaded_logger(name=f"{hostname}_emulator")
-        emulator_logger.info("Main entry function: Starting CIP Emulator in GUI mode.")
-        gui = CIPGUI(config_path=CONFIG_PATH, logger_app=emulator_logger)
-        gui.run()
-        return
-
     # Manual event loop for graceful shutdown
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -164,19 +185,30 @@ def main():
     # Create a stop event
     stop_event = asyncio.Event()
 
-    # Signal handlers to set the stop event
-    def signal_handler():
+    def signal_handler(sig, frame):
+        current_thread = threading.current_thread().name
+        print(f"Signal received ({sig}) in thread {current_thread}. Cancelling tasks...")
         stop_event.set()
+        for task in asyncio.all_tasks(loop):
+            task.cancel()
+        loop.call_soon_threadsafe(loop.stop)
 
-    signal.signal(signal.SIGINT, lambda sig, frame: signal_handler())
-    signal.signal(signal.SIGTERM, lambda sig, frame: signal_handler())
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     try:
-        emulator, emulator_logger = loop.run_until_complete(run_emulator(args, config, hostname, stop_event))
+        loop.run_until_complete(run_emulator(args, config, hostname, stop_event))
+    except asyncio.CancelledError:
+        print("Main function: Tasks cancelled. Cleaning up...")
     finally:
+        print("Main function: Stopping event loop and cleaning up tasks...")
+        remaining_tasks = asyncio.all_tasks(loop)
+        for task in remaining_tasks:
+            task.cancel()
+        loop.run_until_complete(asyncio.gather(*remaining_tasks, return_exceptions=True))
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
-
+        print("Event loop closed.")
 
 if __name__ == "__main__":
     cProfile.run("main()", "profile_results.prof")
