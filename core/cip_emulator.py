@@ -1,202 +1,181 @@
 import asyncio
-import time
-import threading
+import inspect
 from core.cip_server import CIPServer
-from core.cip_client import CIPClient
-from core.time.server.timesyncserver import TimeSyncServer
-from core.time.client.timesyncclient import TimeSyncClient
+from utils.logger import create_threaded_logger
 
 
 class CIPEmulator:
-    def __init__(self, app_config, consumer_config, producers_config, logger_server=None, logger_client=None, logger_app=None, gui_mode=False, quiet=False):
+    def __init__(self, app_config, consumer_config, producers_config, gui_mode=False, quiet=False, threadmanager=None):
         """
-        CIPEmulator initializes and controls the server and client components based on provided configurations.
+        CIPEmulator initializes and controls components based on the dependency graph.
         """
-        # Name the main thread for this emulator instance
         self.app_config = app_config
         self.consumer_config = consumer_config
         self.producers_config = producers_config
         self.gui_mode = gui_mode
         self.quiet = quiet
-        self.logger_app = logger_app
-        self.class_name = self.__class__.__name__
-        threading.current_thread().name = f"{self.class_name}_MainThread"
+        self.threadmanager = threadmanager
 
+        # Components managed by the dependency graph
+        self.components = {}
 
-        # Logging setup
-        self.server_logger = self._wrap_logger(logger_server) if logger_server else self._null_logger
-        self.client_loggers = logger_client or {}
+        # Initialize logger
+        self.logger_app = self._wrap_logger(
+            create_threaded_logger(threadmanager, name="CIPEmulator_Logger", log_to_console=True, debug=False)
+        )
+        self.register_component("logger_app", self.logger_app)
+        # Initialize Server Logger
+        self.logger_server = self._wrap_logger(
+            create_threaded_logger(threadmanager, name="CIPServer_Logger", log_to_console=True, debug=False)
+        )
+        self.register_component("logger_server", self.logger_server)
+        # Initialize CIPServer
+        self.cip_server = CIPServer(logger=self.logger_server, consumer_config=consumer_config, thread_manager=self.threadmanager)
+        self.register_component("cip_server", self.cip_server, dependencies=["logger_app"])
 
-        # Time sync server and client
-        self.tsync_server = TimeSyncServer(logger_app=self.logger_app) if not gui_mode else None
-        self.tsync_client = None
+        # Placeholder for CIPClients
+        # self.cip_clients = [
+        #     self._initialize_client(tag, config) for tag, config in producers_config.items()
+        # ]
 
-        # CIPServer
-        self.server = CIPServer(self.server_logger, consumer_config) if logger_server else None
-
-        # CIPClients
-        self.producers = [
-            CIPClient(self._create_client_logger(tag), config, tag=tag, quiet=self.quiet, logger_app=self.logger_app)
-            for tag, config in producers_config.items()
-        ]
+        # Resolve dependencies during initialization
+        self.resolve_dependencies()
 
     def _wrap_logger(self, logger):
         """
         Wrap a logger to ensure it can be called uniformly regardless of its original structure.
-        If the logger is None, use a no-op logger instead.
         """
         if logger is None:
-            return lambda message, level="INFO": None  # No-op logger
-        if callable(logger):
+            return self._null_logger  # Fallback to no-op logger
+
+        if hasattr(logger, "info"):  # Already a logger with required methods
             return logger
 
-        def wrapped_logger(message, level="INFO"):
-            log_method = getattr(logger, level.lower(), logger.info)
-            log_method(message, log_to_console_cancel=self.quiet)
+        # Wrap a function-like logger to provide `info`, `error`, etc.
+        class FunctionLoggerWrapper:
+            def __init__(self, log_func):
+                self.log_func = log_func
 
-        return wrapped_logger
+            def info(self, message):
+                self.log_func(message, level="INFO")
 
-    def _create_client_logger(self, client_tag):
+            def warning(self, message):
+                self.log_func(message, level="WARNING")
+
+            def error(self, message):
+                self.log_func(message, level="ERROR")
+
+            def debug(self, message):
+                self.log_func(message, level="DEBUG")
+
+        return FunctionLoggerWrapper(logger)
+
+
+
+
+
+    def _initialize_client(self, tag, config):
         """
-        Create or retrieve a logger for the client, appending the tag to messages.
+        Initialize a CIPClient with its logger.
         """
-        client_logger = self.client_loggers.get(client_tag, self._null_logger)
-        return lambda message, level="INFO": getattr(client_logger, level.lower(), 
-            client_logger.info)(
-            f"[{client_tag}] {message}", log_to_console_cancel=self.quiet
-        )
+        logger = self.logger_clients[tag]
+        client = CIPServer(logger=logger, consumer_config=config)  # Replace with actual CIPClient
+        self.register_component(f"cip_client_{tag}", client, dependencies=[f"logger_client_{tag}"])
+        return client
 
-    def _null_logger(self, message, level="INFO"):
-        """A placeholder logger."""
-        pass
-
-    async def _initialize_time_sync_client(self):
+    def register_component(self, name, component, dependencies=None):
         """
-        Initialize and wait for stability in the TimeSyncClient.
+        Register a component with optional dependencies in the dependency graph.
         """
-        if not self.tsync_client:
-            try:
-                self.tsync_client = TimeSyncClient(
-                    server_ip=self.consumer_config.get("server_ip"),
-                    logger_app=self.logger_app,
-                    server_port=self.consumer_config.get("time_sync_port", 5555),
-                    txrate=0.1,
-                    filter_factor=self.consumer_config.get("latency_filter_factor"),
-                )
-                self.logger_app.info(f"{self.class_name}: Starting TimeSyncClient.")
-                if not self.tsync_client.start():
-                    self.logger_app.error(f"{self.class_name}: TimeSyncServer unreachable.")
-                    return False
+        self.components[name] = {
+            "instance": component,
+            "dependencies": dependencies or [],
+        }
 
-                start_time = time.time()
-                while not self.tsync_client.is_stable():
-                    if time.time() - start_time > 20:  # Timeout after 20 seconds
-                        self.logger_app.warning(f"{self.class_name}: TimeSyncClient stability timeout.")
-                        return False
-                    try:
-                        await asyncio.sleep(0.1)
-                    except asyncio.CancelledError:
-                        self.logger_app.info(f"{self.class_name}: TimeSyncClient initialization cancelled.")
-                        raise
-
-                self.logger_app.info(f"{self.class_name}: TimeSyncClient is stable.")
-                return True
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to initialize TimeSyncClient: {e}")
-                return False
-
-    async def start_server(self):
+    def resolve_dependencies(self):
         """
-        Start the CIPServer and TimeSyncServer asynchronously.
+        Resolve component dependencies using a topological sort.
         """
-        tasks = []
+        resolved_order = []
+        unresolved = set(self.components.keys())
+        while unresolved:
+            for name in list(unresolved):
+                dependencies = self.components[name]["dependencies"]
+                if all(dep in resolved_order for dep in dependencies):
+                    resolved_order.append(name)
+                    unresolved.remove(name)
 
-        if self.server:
-            try:
-                thread_name = f"{self.class_name}_CIPServerThread"
-                threading.current_thread().name = thread_name
-                self.logger_app.info(f"{self.class_name}: Starting CIPServer.")
-                tasks.append(self.server.start())
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to start CIPServer: {e}")
+        self.start_order = resolved_order
+        self.stop_order = resolved_order[::-1]  # Reverse for shutdown order
 
-        if self.tsync_server:
-            try:
-                thread_name = f"{self.class_name}_TimeSyncServerThread"
-                threading.current_thread().name = thread_name
-                self.logger_app.info(f"{self.class_name}: Starting TimeSyncServer.")
-                tasks.append(self.tsync_server.start())
-            except Exception as e:
-                self.logger_app.error(f"{self.class_name}: Failed to start TimeSyncServer: {e}")
-
-        if tasks:
-            try:
-                await asyncio.gather(*tasks)
-            except asyncio.CancelledError:
-                self.logger_app.warning(f"{self.class_name}: Cancellation received during server startup.")
-                await self.stop_server()
-                raise KeyboardInterrupt()
-
-    async def stop_server(self):
+    async def start(self):
         """
-        Stop the CIPServer and TimeSyncServer.
+        Start all components in the correct dependency order.
         """
         try:
-            if self.server:
-                try:
-                    self.logger_app.info(f"{self.class_name}: Stopping CIPServer.")
-                    await self.server.stop()
-                    self.logger_app.info(f"{self.class_name}: CIPServer stopped.")
-                except Exception as e:
-                    self.logger_app.error(f"{self.class_name}: Failed to stop CIPServer: {e}")
+            self.logger_app.info("Starting CIPEmulator...")
 
-            if self.tsync_server:
-                try:
-                    self.logger_app.info(f"{self.class_name}: Stopping TimeSyncServer.")
-                    await self.tsync_server.stop()
-                    self.logger_app.info(f"{self.class_name}: TimeSyncServer stopped.")
-                except asyncio.CancelledError:
-                    self.logger_app.warning(f"{self.class_name}: Cancellation during TimeSyncServer shutdown.")
-                    raise
-                except Exception as e:
-                    self.logger_app.error(f"{self.class_name}: Failed to stop TimeSyncServer: {e}")
-        finally:
-            self.logger_app.info(f"{self.class_name}: All servers stopped.")
+            for name in self.start_order:
+                component = self.components.get(name, {}).get("instance")
+                if component is None:
+                    raise ValueError(f"Component '{name}' is not defined or missing an instance.")
 
-    async def start_all_clients(self):
-        """
-        Start all CIPClients and ensure TimeSyncClient stability.
-        """
-        if await self._initialize_time_sync_client():
-            for client in self.producers:
-                thread_name = f"{self.class_name}_Client_{client.tag}"
-                threading.current_thread().name = thread_name
-                self.logger_app.info(f"{self.class_name}: Starting client {client.tag} on thread {thread_name}.")
-            await asyncio.gather(*[client.start() for client in self.producers])
+                self.logger_app.info(f"Starting component: {name}")
+                
+                # Await the start method (either async_start or start)
+                if hasattr(component, "async_start"):
+                    await component.async_start()
+                else:
+                    await component.start()
 
-    async def stop_all_clients(self):
+            self.logger_app.info("CIPEmulator started successfully.")
+
+        except Exception as e:
+            self.logger_app.error(f"Error while starting CIPEmulator: {e}")
+            raise
+
+
+    async def stop(self):
         """
-        Stop all CIPClients and the TimeSyncClient.
+        Stop all components in reverse dependency order.
         """
-        self.logger_app.info(f"{self.class_name}: Stopping all clients.")
-        await asyncio.gather(*[client.stop() for client in self.producers])
-        if self.tsync_client:
-            self.tsync_client.stop()
-            self.tsync_client = None
-            self.logger_app.info(f"{self.class_name}: TimeSyncClient stopped.")
+        self.logger_app.info("Stopping CIPEmulator...")
+
+        for name in self.stop_order:
+            try:
+                component = self.components.get(name, {}).get("instance")
+                if component is None:
+                    self.logger_app.warning(f"Component '{name}' is missing or invalid during shutdown.")
+                    continue
+
+                self.logger_app.info(f"Stopping component: {name}")
+
+                # Ensure the component has a stop method
+                if hasattr(component, "stop"):
+                    if inspect.iscoroutinefunction(component.stop):
+                        await component.stop()
+                    else:
+                        component.stop()
+                else:
+                    self.logger_app.warning(f"Component '{name}' does not have a stop method.")
+
+            except Exception as e:
+                self.logger_app.error(f"Error stopping component '{name}': {e}")
+
+        self.logger_app.info("CIPEmulator stopped successfully.")
 
     async def run(self):
         """
         Main entry point for running the emulator.
         """
         try:
-            await self.start_server()
-            await self.start_all_clients()
+            await self.start()
+            self.logger_app.info("CIPEmulator is running. Press Ctrl+C to exit.")
+            while True:
+                await asyncio.sleep(1)  # Keep the emulator running
         except asyncio.CancelledError:
-            self.logger_app.info(f"{self.class_name}: Emulator cancelled.")
-            raise KeyboardInterrupt()
+            self.logger_app.warning("CIPEmulator run cancelled.")
+        except KeyboardInterrupt:
+            self.logger_app.info("CIPEmulator interrupted by user.")
         finally:
-            self.logger_app.info(f"{self.class_name}: Stopping all clients.")
-            await self.stop_all_clients()
-            self.logger_app.info(f"{self.class_name}: Stopping server.")
-            await self.stop_server()
+            await self.stop()

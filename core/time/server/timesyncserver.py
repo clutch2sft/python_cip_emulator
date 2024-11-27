@@ -96,67 +96,6 @@ class TimeSyncServer:
         await self.server.stop(grace=5)
         self.logger.info("TimeSyncServer stopped.")
 
-    # async def start(self):
-    #     """Starts the gRPC server to listen for incoming timestamp requests."""
-    #     threading.current_thread().name = f"TimeSyncServer_MainThread"
-    #     self.logger.info(f"TimeSyncServer: Starting on {self.ip_address}:{self.port}")
-    #     await self.server.start()
-    #     self.logger.info(f"TimeSyncServer: Server started on {self.ip_address}:{self.port}")
-
-    #     termination_task = asyncio.create_task(self.server.wait_for_termination())
-    #     self.monitor_task = asyncio.create_task(self._monitor_server()) if self.debug else None
-
-    #     try:
-    #         if self.monitor_task:
-    #             await asyncio.gather(termination_task, self.monitor_task)
-    #         else:
-    #             await termination_task
-    #     except asyncio.CancelledError:
-    #         self.logger.warning("TimeSyncServer: Cancellation received, shutting down...")
-    #         await self.stop()  # Ensure graceful shutdown
-    #     finally:
-    #         # Cancel tasks explicitly
-    #         if termination_task:
-    #             termination_task.cancel()
-    #             try:
-    #                 await termination_task
-    #             except asyncio.CancelledError:
-    #                 self.logger.info("TimeSyncServer: Termination task cancelled.")
-    #         if self.monitor_task:
-    #             self.monitor_task.cancel()
-    #             try:
-    #                 await self.monitor_task
-    #             except asyncio.CancelledError:
-    #                 self.logger.info("TimeSyncServer: Monitor task cancelled.")
-
-    # async def stop(self):
-    #     """Stops the gRPC server."""
-    #     if self.stopped:
-    #         self.logger.warning("TimeSyncServer: Stop called, but server is already stopped.")
-    #         return
-
-    #     self.stopped = True  # Mark as stopped to prevent duplicate calls
-
-    #     try:
-    #         self.logger.info(f"TimeSyncServer: Stopping on {self.ip_address}:{self.port}")
-
-    #         # Cancel the monitor task if running
-    #         if self.monitor_task:
-    #             self.monitor_task.cancel()
-    #             try:
-    #                 await self.monitor_task
-    #             except asyncio.CancelledError:
-    #                 self.logger.info("TimeSyncServer: Monitor task cancelled during shutdown.")
-
-    #         # Stop the gRPC server
-    #         await self.server.stop(grace=5)
-    #     except asyncio.CancelledError:
-    #         self.logger.warning("TimeSyncServer: Cancellation received during shutdown.")
-    #     except Exception as e:
-    #         self.logger.error(f"TimeSyncServer: Error during shutdown: {e}")
-    #     finally:
-    #         self.logger.info("TimeSyncServer: Server has been stopped.")
-
     async def _monitor_server(self):
         """Monitor server activity and log if in debug mode."""
         threading.current_thread().name = f"TimeSyncServer_MonitorThread"
