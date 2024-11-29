@@ -28,7 +28,7 @@ class PacketHandler:
         # Monitor both queues concurrently
         await asyncio.gather(
             self._process_udp_packets(),
-            self._process_tcp_packets()
+            self._tcpsrv_process_timestamp_requests()
         )
 
     async def _process_udp_packets(self):
@@ -79,19 +79,22 @@ class PacketHandler:
         except Exception as e:
             self.logger.error(f"PacketHandler: Error handling UDP packet: {e}")
 
-    async def _process_tcp_packets(self):
-        """Handle packets from the TCP timestamp queue."""
+    async def _tcpsrv_process_timestamp_requests(self):
+        """Handle timestamp requests from the TCP timestamp queue."""
         while self.running or not self.tcp_timestamp_queue.empty():
             try:
-                addr, timestamp_ns = await self.tcp_timestamp_queue.get()
-                self.logger.info(f"PacketHandler: Processing TCP timestamp request from {addr}.")
-                response_message = f"Timestamp: {timestamp_ns}\n"
+                # Retrieve addr, packet_number, and timestamp_ns from the queue
+                addr, packet_number, timestamp_ns = await self.tcp_timestamp_queue.get()
+                self.logger.info(f"PacketHandler: Processing TCP timestamp request from {addr} with packet number {packet_number}.")
+
+                # Construct response message with packet number and timestamp
+                response_message = f"ResponseTimestamp:{packet_number},{timestamp_ns}\n"
                 await self.tcp_server.send_response(addr, response_message)
             except asyncio.CancelledError:
-                self.logger.info("PacketHandler: TCP packet processing stopped.")
+                self.logger.info("PacketHandler: TCP timestamp processing stopped.")
                 break
             except Exception as e:
-                self.logger.error(f"PacketHandler: Error processing TCP packet: {e}")
+                self.logger.error(f"PacketHandler: Error processing TCP timestamp request: {e}")
 
 
 

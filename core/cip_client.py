@@ -1,160 +1,94 @@
 import asyncio
-import socket
-from datetime import datetime, timedelta
-from core.time.driftcorrection import DriftCorrectorBorg
+from cip_tcp_server import CIPTcpServer
+from cip_udp_client import CIPUdpClient
+from cip_udp_server import CIPUdpServer
+
 
 class CIPClient:
-    def __init__(self, logger, producer_config, tag, quiet=False, logger_app=None, debug=False):
-        self.logger = logger
-        self.config = producer_config
-        self.tag = tag
-        self.debug = debug
-        self.packet_interval_ms = self.config.get("packet_interval_ms", 100)
-        self.enable_packet_skip = self.config.get("enable_packet_skip", False)
-        self.server_ip = self.config.get("ip", "127.0.0.1")
-        self.tcp_port = self.config.get("tcp_port", 1502)
-        self.udp_dstport = self.config.get("udp_dstport", 2222)
-        self.udp_srcport = self.config.get("udp_srcport", 2222)
-        self.sequence_number = 1
-        self.running = False
-        self.quiet = quiet
-        self.tcp_connected = asyncio.Event()  # Changed to asyncio.Event for async compatibility
+    def __init__(self, logger, consumer_config, producer_configs, thread_manager, timestamp_queue, drift_corrector):
+        """
+        Initialize the CIPClient.
 
-        self.qos = self.config.get("qos", 0)
-        self.drift_corrector = DriftCorrectorBorg(network_latency_ns=30000000, logger_app=logger_app)
-        self.class_name = self.__class__.__name__
-        # Validate DSCP value (QoS)
-        if not (0 <= self.qos <= 63):
-            self.logger(f"Invalid DSCP value {self.qos}. Setting to 0.", level="WARNING")
-            self.qos = 0
+        Args:
+            logger: Logger instance for logging.
+            consumer_config: Configuration for the TCP server.
+            producer_configs: Dictionary of configurations for multiple UDP flows.
+            thread_manager: Thread manager for handling tasks.
+            timestamp_queue: Queue for handling timestamp requests.
+            drift_corrector: DriftCorrector instance for UDP timestamp adjustments.
+        """
+        self.logger = logger
+        self.consumer_config = consumer_config
+        self.producer_configs = producer_configs
+        self.thread_manager = thread_manager
+        self.timestamp_queue = timestamp_queue
+        self.drift_corrector = drift_corrector
+
+        # Shared resources
+        self.connections = {}
+        self.tcp_connected_event = asyncio.Event()  # Shared TCP connection event
+
+        # Initialize TCP server
+        self.tcp_server = CIPTcpServer(
+            logger=self.logger,
+            consumer_config=self.consumer_config,
+            thread_manager=self.thread_manager,
+            timestamp_queue=self.timestamp_queue,
+            connections=self.connections,
+            tcp_connected_event=self.tcp_connected_event
+        )
+
+        # Initialize UDP clients for each producer config
+        self.udp_clients = []
+        for name, config in self.producer_configs.items():
+            udp_client = CIPUdpClient(
+                server_ip=config["ip"],
+                udp_dstport=config["udp_dstport"],
+                udp_srcport=config["udp_srcport"],
+                logger=self.logger,
+                drift_corrector=self.drift_corrector,
+                tcp_connected_event=self.tcp_connected_event,
+                qos=config["qos"],
+                packet_interval_ms=config["packet_interval_ms"],
+                enable_packet_skip=config["enable_packet_skip"],
+                tag=name,
+                debug=config.get("debug", False)
+            )
+            self.udp_clients.append(udp_client)
+
+        # Initialize single UDP server
+        self.udp_server = CIPUdpServer(
+            logger=self.logger,
+            consumer_config=self.consumer_config,
+            timestamp_queue=self.timestamp_queue
+        )
 
     async def start(self):
-        """Start the client and run tasks for TCP and UDP communication."""
-        self.sequence_number = 1  # Reset sequence number
-        self.running = True
-        self.logger(f"{self.class_name}: Starting CIP Client for tag '{self.tag}'.", level="INFO")
+        """Start the CIP client."""
+        self.logger("CIPClient: Starting CIP client.", level="INFO")
 
-        # Run TCP keepalive and UDP packet sending concurrently
+        # Start TCP server, UDP clients, and UDP server concurrently
         await asyncio.gather(
-            self.send_tcp_keepalive(),
-            self.send_udp_packets()
+            self._start_tcp_server(),
+            self._start_udp_clients(),
+            self.udp_server.start()
         )
 
     async def stop(self):
-        """Stop the client and close connections gracefully."""
-        self.logger(f"{self.class_name}: Stopping CIP Client for tag '{self.tag}'. Average clock drift: {self.drift_corrector.get_drift()} ns.", level="INFO")
-        self.running = False
+        """Stop the CIP client."""
+        self.logger("CIPClient: Stopping CIP client.", level="INFO")
+        await self.tcp_server.stop()
+        for udp_client in self.udp_clients:
+            udp_client.stop()
+        await self.udp_server.stop()
 
-    async def send_tcp_keepalive(self):
-        """Establish TCP connection and send periodic keepalive messages."""
-        while self.running:
-            try:
-                reader, writer = await asyncio.open_connection(self.server_ip, self.tcp_port)
-                self.tcp_connected.set()  # Indicate that the TCP connection is active
-                self.logger(f"{self.class_name}: Connected to TCP server at {self.server_ip}:{self.tcp_port}.", level="INFO")
+    async def _start_tcp_server(self):
+        """Start the TCP server."""
+        await self.tcp_server.start()
 
-                keepalive_interval = self.packet_interval_ms * \
-                                    self.config.get("tcp_keepalive_multiplier", 10) / 1000.0
+    async def _start_udp_clients(self):
+        """Start all UDP clients."""
+        for udp_client in self.udp_clients:
+            udp_client.start()
+            await udp_client.send_udp_packets()
 
-                while self.running:
-                    message = f"CIP CM Client Keepalive - {datetime.now()}"
-                    writer.write(message.encode())
-                    await writer.drain()
-                    self.logger(f"{self.class_name}: Sent TCP keepalive: {message}", level="INFO")
-
-                    try:
-                        # Read data with a timeout equal to the keepalive interval
-                        data = await asyncio.wait_for(reader.read(1024), timeout=keepalive_interval)
-                        self.logger(f"{self.class_name}: Received keepalive from server: {data.decode()}", level="INFO")
-                    except asyncio.TimeoutError:
-                        pass
-
-                    # Sleep for the keepalive interval
-                    await asyncio.sleep(keepalive_interval)
-
-            except (ConnectionRefusedError, ConnectionResetError, OSError) as e:
-                self.logger(f"{self.class_name}: TCP connection error: {e}. Retrying...", level="ERROR")
-                self.tcp_connected.clear()  # Indicate that the TCP connection is inactive
-                await asyncio.sleep(2)
-
-
-    async def send_udp_packets(self):
-        """Simulate a UDP-based I/O data flow, conditional on TCP connection."""
-        self.logger(f"{self.class_name}: Starting UDP packet sender for {self.tag}.", level="INFO")
-        # Create and configure the UDP socket
-        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # Enable port reuse
-        self.udp_socket.bind(("", self.udp_srcport))  # Bind to source port
-
-        # Set DSCP value for QoS
-        tos_value = (self.qos << 2) & 0xFF
-        self.udp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_TOS, tos_value)
-
-        self.logger(f"UDP socket created with DSCP value {self.qos} (0x{tos_value:X}).", level="INFO")
-
-        packet_size = self.config.get("packet_size", 84)  # Default packet size
-
-        while self.running:
-            # Wait for TCP connection
-            if self.debug:
-                self.logger(f"{self.class_name}: Waiting for TCP connection to send UDP packets.", level="DEBUG")
-
-            while not self.tcp_connected.is_set() and self.running:
-                await asyncio.sleep(0.1)
-                self.logger(f"{self.class_name}: TCP connection established. Proceeding with UDP packet transmission.", level="DEBUG")
-            if not self.running:
-                break
-
-            try:
-                timestamp = datetime.now()
-                clock_diff = self.drift_corrector.get_drift()
-                microseconds_to_add = clock_diff / 1000
-                time_adjustment = timedelta(microseconds=(microseconds_to_add * -1))
-                adjusted_time = timestamp + time_adjustment
-
-                # Adjust timestamp for every 11th packet to create an outlier
-                if self.enable_packet_skip and self.sequence_number % 11 == 0:
-                    adjusted_time -= timedelta(seconds=2)
-                    self.logger(f"Adjusted timestamp for sequence {self.sequence_number} to create an outlier.", level="INFO")
-
-                timestamp_str = adjusted_time.strftime("%Y-%m-%d %H:%M:%S.%f")
-                message = f"{self.class_name}: {self.tag},{self.sequence_number},{timestamp_str}".strip()
-                message_bytes = message.encode()
-
-                # Pad or truncate the message to fit the desired packet size
-                if len(message_bytes) < packet_size:
-                    padding = b' ' * (packet_size - len(message_bytes))
-                    message_bytes += padding
-                elif len(message_bytes) > packet_size:
-                    self.logger(f"{self.class_name}: Warning: Packet size ({len(message_bytes)}) exceeds specified limit ({packet_size}).", level="ERROR")
-                    message_bytes = message_bytes[:packet_size]
-
-                # Send the packet to the server
-                self.udp_socket.sendto(message_bytes, (self.server_ip, self.udp_dstport))
-                self.logger(f"Sent UDP packet to ({self.server_ip},{self.udp_dstport}) with tag '{self.tag}', "
-                            f"sequence {self.sequence_number}, DSCP {self.qos}, and size {len(message_bytes)} bytes.",
-                            level="INFO")
-
-                self.sequence_number += 1
-
-                # Sleep for the interval while respecting `self.running`
-                await asyncio.sleep(self.packet_interval_ms / 1000.0)
-
-            except OSError as e:
-                self.logger(f"Error in UDP client: {e}", level="ERROR")
-                break
-
-        # Close the UDP socket
-        try:
-            self.logger("Closing UDP socket...", level="DEBUG")
-            self.udp_socket.close()
-            self.logger("UDP socket closed.", level="DEBUG")
-        except OSError as e:
-            self.logger(f"Error closing UDP socket: {e}", level="ERROR")
-
-    async def monitor_drift(self):
-        """Periodically log the current drift for debugging."""
-        while self.running:
-            drift_ns = self.drift_corrector.get_drift()
-            self.logger(f"{self.class_name}: Current clock drift: {drift_ns} ns.", level="DEBUG")
-            await asyncio.sleep(5)  # Adjust frequency as needed

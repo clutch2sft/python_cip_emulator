@@ -2,15 +2,29 @@ import asyncio
 import socket
 import time
 
+
 class CIPTcpServer:
-    def __init__(self, logger, consumer_config, thread_manager, timestamp_queue, connections):
+    def __init__(self, logger, consumer_config, thread_manager, timestamp_queue, connections, tcp_connected_event):
+        """
+        Initialize the CIPTcpServer.
+
+        Args:
+            logger: Logger instance for logging.
+            consumer_config: Configuration for the TCP server.
+            thread_manager: Thread manager for handling tasks.
+            timestamp_queue: Queue for handling timestamp requests.
+            connections: Dictionary to track active connections.
+            tcp_connected_event: asyncio.Event to signal active connections.
+        """
         self.logger = logger
         self.consumer_config = consumer_config
         self.thread_manager = thread_manager
         self.timestamp_queue = timestamp_queue
         self.connections = connections
+        self.tcp_connected_event = tcp_connected_event  # Shared event
         self.tcp_socket = None
         self.running = False
+        self.consumer_ready_clients = set()  # Track clients that sent "consumer_ready"
 
     async def start(self):
         """Start the TCP server."""
@@ -21,7 +35,7 @@ class CIPTcpServer:
         self.tcp_socket.listen(5)
         self.tcp_socket.setblocking(False)
         self.logger.info("CIPTcpServer: TCP server listening on port 1502.")
-        
+
         loop = asyncio.get_running_loop()
         self.running = True
         while self.running:
@@ -46,8 +60,24 @@ class CIPTcpServer:
                     if data:
                         message = data.decode().strip()
                         self.logger.info(f"CIPTcpServer: Received message from {addr}: {message}")
-                        if message == "RequestTimestamp":
-                            await self.timestamp_queue.put((addr, time.time_ns()))
+
+                        # Handle specific messages
+                        if message.startswith("RequestTimestamp:"):
+                            try:
+                                # Extract the packet number from the message
+                                _, packet_number = message.split(":")
+                                packet_number = int(packet_number.strip())
+                                # Add the packet number and timestamp to the queue
+                                await self.timestamp_queue.put((addr, packet_number, time.time_ns()))
+                            except ValueError:
+                                self.logger.error(f"CIPTcpServer: Malformed RequestTimestamp message: {message}")
+
+                        elif message == "consumer_ready":
+                            self.logger.info(f"CIPTcpServer: Received 'consumer_ready' from {addr}")
+                            self.consumer_ready_clients.add(addr)
+                            self._update_tcp_connected_event()
+                        else:
+                            self.logger.warning(f"CIPTcpServer: Unknown message from {addr}: {message}")
                     else:
                         self.logger.info(f"CIPTcpServer: Client {addr} disconnected.")
                         break
@@ -61,6 +91,8 @@ class CIPTcpServer:
         finally:
             conn.close()
             self.connections.pop(addr, None)
+            self.consumer_ready_clients.discard(addr)  # Remove from ready clients
+            self._update_tcp_connected_event()
 
     async def send_response(self, addr, message):
         """Send a response message to the specified client."""
@@ -74,9 +106,22 @@ class CIPTcpServer:
                 # Close and clean up the connection if it fails
                 conn.close()
                 self.connections.pop(addr, None)
+                self.consumer_ready_clients.discard(addr)  # Remove from ready clients
+                self._update_tcp_connected_event()
         else:
             self.logger.warning(f"CIPTcpServer: No connection found for {addr}.")
-    
+
+    def _update_tcp_connected_event(self):
+        """
+        Update the TCP connected event based on consumer readiness.
+        """
+        if self.consumer_ready_clients:
+            self.tcp_connected_event.set()
+            self.logger.info(f"CIPTcpServer: Consumer ready clients detected. Event set.")
+        else:
+            self.tcp_connected_event.clear()
+            self.logger.info(f"CIPTcpServer: No ready consumers. Event cleared.")
+
     def stop(self):
         """Stop the TCP server."""
         self.running = False
